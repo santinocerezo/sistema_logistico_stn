@@ -15,9 +15,9 @@ interface PaymentGatewayResponse {
 }
 
 async function processPaymentGateway(
-  amount: number,
-  paymentMethod: string,
-  cardToken?: string
+  _amount: number,
+  _paymentMethod: string,
+  _cardToken?: string
 ): Promise<PaymentGatewayResponse> {
   // Simulación: 95% de éxito
   const success = Math.random() > 0.05;
@@ -61,7 +61,7 @@ export async function topUpBalance(req: Request, res: Response): Promise<void> {
   
   try {
     const { amount, payment_method, card_token, save_card } = req.body;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     // Validar monto
     if (!amount || amount <= 0) {
@@ -155,7 +155,7 @@ export async function topUpBalance(req: Request, res: Response): Promise<void> {
  */
 export async function getTransactions(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { start_date, end_date, limit = 50, offset = 0 } = req.query;
 
     let query = `
@@ -199,7 +199,7 @@ export async function getTransactions(req: Request, res: Response): Promise<void
 export async function getReceipt(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     const result = await pool.query(
       'SELECT * FROM transactions WHERE id = $1 AND user_id = $2',
@@ -229,7 +229,7 @@ export async function getReceipt(req: Request, res: Response): Promise<void> {
 export async function savePaymentMethod(req: Request, res: Response): Promise<void> {
   try {
     const { card_type, last_four, brand, card_token, is_default } = req.body;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     if (!card_token) {
       res.status(400).json({ error: 'Token de tarjeta requerido' });
@@ -262,7 +262,7 @@ export async function savePaymentMethod(req: Request, res: Response): Promise<vo
  */
 export async function getPaymentMethods(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     const result = await pool.query(
       `SELECT id, card_type, last_four, brand, is_default, created_at

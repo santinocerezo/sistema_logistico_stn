@@ -41,7 +41,7 @@ export async function confirmDelivery(req: Request, res: Response): Promise<void
       location_lng,
     } = req.body;
     
-    const courierId = (req as any).user.id;
+    const courierId = (req as any).user.userId;
 
     // Validar que al menos una evidencia esté presente
     if (!verification_code && !signature_url && !photo_url) {
@@ -160,7 +160,7 @@ export async function failDelivery(req: Request, res: Response): Promise<void> {
       location_lng,
     } = req.body;
     
-    const courierId = (req as any).user.id;
+    const courierId = (req as any).user.userId;
 
     if (!failure_reason) {
       res.status(400).json({ error: 'El motivo de no entrega es requerido' });
@@ -300,7 +300,7 @@ export async function failDelivery(req: Request, res: Response): Promise<void> {
 export async function getLiveLocation(req: Request, res: Response): Promise<void> {
   try {
     const { shipmentId } = req.params;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     // Verificar que el envío pertenece al usuario
     const shipmentResult = await pool.query(

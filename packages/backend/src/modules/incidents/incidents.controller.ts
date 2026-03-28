@@ -14,8 +14,8 @@ export async function createIncident(req: Request, res: Response): Promise<void>
   const client = await pool.connect();
   
   try {
-    const { shipment_id, type, description, photo_urls } = req.body;
-    const userId = (req as any).user.id;
+    const { shipment_id, type, description } = req.body;
+    const userId = (req as any).user.userId;
 
     if (!shipment_id || !type || !description) {
       res.status(400).json({ error: 'Envío, tipo y descripción son requeridos' });
@@ -80,7 +80,7 @@ export async function createIncident(req: Request, res: Response): Promise<void>
  */
 export async function listIncidents(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { status, limit = 50, offset = 0 } = req.query;
 
     let query = `
@@ -120,8 +120,8 @@ export async function createClaim(req: Request, res: Response): Promise<void> {
   const client = await pool.connect();
   
   try {
-    const { incident_id, description, claimed_amount, evidence_urls } = req.body;
-    const userId = (req as any).user.id;
+    const { incident_id, description, claimed_amount } = req.body;
+    const userId = (req as any).user.userId;
 
     if (!incident_id || !description) {
       res.status(400).json({ error: 'Incidencia y descripción son requeridos' });
@@ -176,7 +176,7 @@ export async function createClaim(req: Request, res: Response): Promise<void> {
  */
 export async function listClaims(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { status, limit = 50, offset = 0 } = req.query;
 
     let query = `
@@ -219,7 +219,7 @@ export async function resolveClaim(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const { approved_amount, admin_notes, status } = req.body;
-    const adminId = (req as any).user.id;
+    const adminId = (req as any).user.userId;
 
     if (!status || !['aprobada', 'rechazada'].includes(status)) {
       res.status(400).json({ error: 'Estado inválido. Debe ser "aprobada" o "rechazada"' });
@@ -308,8 +308,8 @@ export async function resolveClaim(req: Request, res: Response): Promise<void> {
  */
 export async function createTicket(req: Request, res: Response): Promise<void> {
   try {
-    const { shipment_id, subject, description, attachments } = req.body;
-    const userId = (req as any).user.id;
+    const { shipment_id, subject, description } = req.body;
+    const userId = (req as any).user.userId;
 
     if (!subject || !description) {
       res.status(400).json({ error: 'Asunto y descripción son requeridos' });
@@ -342,7 +342,7 @@ export async function createTicket(req: Request, res: Response): Promise<void> {
  */
 export async function listTickets(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { status, limit = 50, offset = 0 } = req.query;
 
     let query = `
@@ -422,7 +422,7 @@ export async function listAllTickets(req: Request, res: Response): Promise<void>
 export async function updateTicket(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const { status, priority, admin_response } = req.body;
+    const { status, priority } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];

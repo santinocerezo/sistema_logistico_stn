@@ -6,7 +6,7 @@ import { createRateSchema, updateRateSchema } from './rates.schemas';
  * GET /admin/rates - Listar todas las tarifas con historial
  * Req 27.7
  */
-export async function listRates(req: Request, res: Response): Promise<void> {
+export async function listRates(_req: Request, res: Response): Promise<void> {
   try {
     const result = await pool.query(
       `SELECT 
@@ -29,7 +29,7 @@ export async function listRates(req: Request, res: Response): Promise<void> {
  * GET /admin/rates/active - Obtener tarifas activas vigentes
  * Req 27.6
  */
-export async function getActiveRates(req: Request, res: Response): Promise<void> {
+export async function getActiveRates(_req: Request, res: Response): Promise<void> {
   try {
     const now = new Date().toISOString();
     

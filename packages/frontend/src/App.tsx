@@ -39,7 +39,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/tracking" element={<Tracking />} />
-              <Route path="/tracking/:code" element={<Tracking />} />
+              <Route path="/tracking/:trackingCode" element={<Tracking />} />
               <Route path="/branches" element={<Branches />} />
 
               {/* Protected Routes */}

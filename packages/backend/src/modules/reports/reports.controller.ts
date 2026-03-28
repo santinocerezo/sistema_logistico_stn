@@ -174,7 +174,7 @@ export async function getCourierPerformance(req: Request, res: Response): Promis
  */
 export async function getFinancialReport(req: Request, res: Response): Promise<void> {
   try {
-    const { start_date, end_date, group_by } = req.query;
+    const { start_date, end_date } = req.query;
 
     // Ingresos por servicio
     const byServiceQuery = `
@@ -241,7 +241,7 @@ export async function getFinancialReport(req: Request, res: Response): Promise<v
  */
 export async function exportShipments(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { start_date, end_date, status, format = 'csv' } = req.query;
 
     let query = `

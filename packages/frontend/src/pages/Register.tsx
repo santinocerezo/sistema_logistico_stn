@@ -54,16 +54,21 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12" style={{ background: '#F8FAFC' }}>
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--primary))]">
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{ background: 'linear-gradient(135deg, #38BDF8, #0284C7)', boxShadow: '0 4px 18px rgba(2,132,199,0.30)' }}
+            >
               <Package className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-[hsl(var(--secondary))]">Crear Cuenta</h1>
-          <p className="mt-2 text-muted-foreground">Registrate para comenzar a enviar</p>
+          <h1 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.02em' }}>
+            Crear Cuenta
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">Registrate para comenzar a enviar</p>
         </div>
 
         <Card>
@@ -118,9 +123,9 @@ export default function Register() {
                 {...register('confirmPassword')}
               />
 
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-slate-500">
                 Al registrarte, aceptás nuestros{' '}
-                <Link to="/terms" className="text-[hsl(var(--primary))] hover:underline">
+                <Link to="/terms" className="text-sky-600 hover:underline">
                   Términos y Condiciones
                 </Link>
               </div>
@@ -129,9 +134,9 @@ export default function Register() {
                 Crear Cuenta
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-sm text-slate-500">
                 ¿Ya tenés cuenta?{' '}
-                <Link to="/login" className="font-medium text-[hsl(var(--primary))] hover:underline">
+                <Link to="/login" className="font-medium text-sky-600 hover:underline">
                   Iniciá sesión
                 </Link>
               </div>

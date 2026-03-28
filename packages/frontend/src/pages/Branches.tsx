@@ -41,19 +41,19 @@ export default function Branches() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent"></div>
-          <p className="text-muted-foreground">Cargando sucursales...</p>
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-sky-400 border-t-transparent"></div>
+          <p className="text-slate-500">Cargando sucursales...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#F8FAFC] py-8">
       <div className="container-custom">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[hsl(var(--secondary))]">Nuestras Sucursales</h1>
-          <p className="text-muted-foreground">Encuentra la sucursal más cercana a vos</p>
+          <h1 className="text-3xl font-bold text-slate-900">Nuestras Sucursales</h1>
+          <p className="text-slate-500">Encuentra la sucursal más cercana a vos</p>
         </div>
 
         <div className="mb-6">
@@ -69,23 +69,23 @@ export default function Branches() {
             <Card key={branch.id} hover>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-[hsl(var(--primary))]" />
+                  <MapPin className="h-5 w-5 text-sky-600" />
                   {branch.name}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-start gap-2">
-                  <MapPin className="mt-1 h-4 w-4 text-muted-foreground" />
+                  <MapPin className="mt-1 h-4 w-4 text-slate-500" />
                   <p className="text-sm">{branch.address}</p>
                 </div>
                 {branch.schedule && (
                   <div className="flex items-start gap-2">
-                    <Clock className="mt-1 h-4 w-4 text-muted-foreground" />
+                    <Clock className="mt-1 h-4 w-4 text-slate-500" />
                     <p className="text-sm">{branch.schedule}</p>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <Phone className="h-4 w-4 text-slate-500" />
                   <p className="text-sm">0800-STN-PQRS</p>
                 </div>
               </CardContent>
@@ -96,9 +96,9 @@ export default function Branches() {
         {filteredBranches.length === 0 && (
           <Card>
             <CardContent className="py-12 text-center">
-              <MapPin className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+              <MapPin className="mx-auto mb-4 h-16 w-16 text-slate-500" />
               <h3 className="mb-2 text-lg font-bold">No se encontraron sucursales</h3>
-              <p className="text-muted-foreground">Intenta con otra búsqueda</p>
+              <p className="text-slate-500">Intenta con otra búsqueda</p>
             </CardContent>
           </Card>
         )}

@@ -12,7 +12,7 @@ import bcrypt from 'bcrypt';
  */
 export async function getProfile(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     const result = await pool.query(
       'SELECT id, email, full_name, phone, avatar_url, balance, discount_level, created_at FROM users WHERE id = $1',
@@ -39,7 +39,7 @@ export async function getProfile(req: Request, res: Response): Promise<void> {
  */
 export async function updateProfile(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { full_name, phone, avatar_url, current_password, new_password } = req.body;
 
     const updates: string[] = [];
@@ -124,7 +124,7 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
  */
 export async function createAddress(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { label, address, lat, lng, is_favorite } = req.body;
 
     if (!label || !address || !lat || !lng) {
@@ -154,7 +154,7 @@ export async function createAddress(req: Request, res: Response): Promise<void> 
  */
 export async function listAddresses(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     const result = await pool.query(
       'SELECT * FROM address_book WHERE user_id = $1 ORDER BY is_favorite DESC, created_at DESC',
@@ -176,7 +176,7 @@ export async function listAddresses(req: Request, res: Response): Promise<void> 
 export async function updateAddress(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { label, address, lat, lng, is_favorite } = req.body;
 
     const updates: string[] = [];
@@ -238,7 +238,7 @@ export async function updateAddress(req: Request, res: Response): Promise<void> 
 export async function deleteAddress(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     const result = await pool.query(
       'DELETE FROM address_book WHERE id = $1 AND user_id = $2 RETURNING *',

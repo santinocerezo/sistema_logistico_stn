@@ -1,10 +1,54 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Package, MapPin, Calendar, DollarSign, ArrowLeft, Truck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Package, Calendar, DollarSign, ArrowLeft, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import api from '../lib/api';
+
+const STATUS_MAP: Record<string, { variant: any; label: string }> = {
+  'Pendiente':      { variant: 'warning', label: 'Pendiente' },
+  'En Sucursal':    { variant: 'default', label: 'En Sucursal' },
+  'Asignado':       { variant: 'primary', label: 'Asignado' },
+  'En Camino':      { variant: 'primary', label: 'En Camino' },
+  'En Entrega':     { variant: 'primary', label: 'En Entrega' },
+  'Entregado':      { variant: 'success', label: 'Entregado' },
+  'Entrega_Fallida':{ variant: 'error', label: 'Entrega Fallida' },
+  'Cancelado':      { variant: 'error', label: 'Cancelado' },
+};
+
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid #F1F5F9' }}>
+      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</span>
+      <span className="text-sm font-semibold text-slate-800">{value}</span>
+    </div>
+  );
+}
+
+function SectionCard({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-2xl bg-white"
+      style={{ border: '1px solid #E2E8F0', boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }}
+    >
+      <div
+        className="flex items-center gap-3 px-6 py-4"
+        style={{ borderBottom: '1px solid #E2E8F0' }}
+      >
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-xl"
+          style={{ background: '#F0F9FF' }}
+        >
+          <Icon className="h-4 w-4" style={{ color: '#0284C7' }} />
+        </div>
+        <h3 className="font-bold text-slate-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          {title}
+        </h3>
+      </div>
+      <div className="px-6">{children}</div>
+    </div>
+  );
+}
 
 export default function ShipmentDetail() {
   const { id } = useParams();
@@ -13,165 +57,108 @@ export default function ShipmentDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadShipment();
+    api.get(`/shipments/${id}`)
+      .then((res) => setShipment(res.data.shipment || res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [id]);
-
-  const loadShipment = async () => {
-    try {
-      const response = await api.get(`/shipments/${id}`);
-      setShipment(response.data);
-    } catch (error) {
-      console.error('Error loading shipment:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: any; label: string }> = {
-      'Pendiente': { variant: 'warning', label: 'Pendiente' },
-      'En_Sucursal': { variant: 'default', label: 'En Sucursal' },
-      'Asignado': { variant: 'primary', label: 'Asignado' },
-      'En_Camino': { variant: 'primary', label: 'En Camino' },
-      'En_Entrega': { variant: 'primary', label: 'En Entrega' },
-      'Entregado': { variant: 'success', label: 'Entregado' },
-      'Entrega_Fallida': { variant: 'error', label: 'Entrega Fallida' },
-      'Cancelado': { variant: 'error', label: 'Cancelado' },
-    };
-    const config = statusMap[status] || { variant: 'default', label: status };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent"></div>
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#0284C7' }} />
       </div>
     );
   }
 
   if (!shipment) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <Package className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-          <h2 className="mb-2 text-xl font-bold">Envío no encontrado</h2>
-          <Button onClick={() => navigate('/shipments')}>Volver a Mis Envíos</Button>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: '#F0F9FF' }}>
+          <Package className="h-7 w-7" style={{ color: '#0284C7' }} />
         </div>
+        <p className="font-bold text-slate-700">Envío no encontrado</p>
+        <Button onClick={() => navigate('/shipments')}>Volver a Mis Envíos</Button>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom max-w-4xl">
-        <Button variant="ghost" onClick={() => navigate('/shipments')} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver
-        </Button>
+  const statusConfig = STATUS_MAP[shipment.status] || { variant: 'default', label: shipment.status };
 
-        <div className="mb-6 flex items-center justify-between">
+  return (
+    <div className="min-h-screen py-10" style={{ background: '#F8FAFC' }}>
+      <div className="container-custom max-w-3xl">
+
+        <button
+          onClick={() => navigate('/shipments')}
+          className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-sky-600"
+        >
+          <ArrowLeft className="h-4 w-4" /> Volver a Mis Envíos
+        </button>
+
+        {/* Header */}
+        <div
+          className="mb-6 flex items-center justify-between rounded-2xl p-6"
+          style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', boxShadow: '0 4px 20px rgba(2,132,199,0.15)' }}
+        >
           <div>
-            <h1 className="text-3xl font-bold text-[hsl(var(--secondary))]">
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>
+              Código de tracking
+            </p>
+            <h1
+              className="mt-1 text-2xl font-black text-white"
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.01em' }}
+            >
               {shipment.tracking_code}
             </h1>
-            <p className="text-muted-foreground">Detalles del envío</p>
           </div>
-          {getStatusBadge(shipment.status)}
+          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Información del Paquete
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tipo:</span>
-                <span className="font-medium">{shipment.shipment_type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Modalidad:</span>
-                <span className="font-medium">{shipment.modality}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Peso:</span>
-                <span className="font-medium">{shipment.weight_kg} kg</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Dimensiones:</span>
-                <span className="font-medium">
-                  {shipment.length_cm} x {shipment.width_cm} x {shipment.height_cm} cm
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Paquete */}
+          <SectionCard icon={Package} title="Información del Paquete">
+            <InfoRow label="Tipo" value={shipment.shipment_type} />
+            <InfoRow label="Modalidad" value={shipment.modality} />
+            <InfoRow label="Peso" value={`${shipment.weight_kg} kg`} />
+            <InfoRow
+              label="Dimensiones"
+              value={`${shipment.length_cm} × ${shipment.width_cm} × ${shipment.height_cm} cm`}
+            />
+          </SectionCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Costos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Costo Base:</span>
-                <span className="font-medium">${shipment.base_cost?.toFixed(2)}</span>
-              </div>
-              {shipment.last_mile_cost > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Última Milla:</span>
-                  <span className="font-medium">${shipment.last_mile_cost?.toFixed(2)}</span>
-                </div>
-              )}
-              {shipment.express_surcharge > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Recargo Express:</span>
-                  <span className="font-medium">${shipment.express_surcharge?.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="border-t border-border pt-3">
-                <div className="flex justify-between text-lg">
-                  <span className="font-bold">Total:</span>
-                  <span className="font-bold text-[hsl(var(--primary))]">
-                    ${shipment.total_cost?.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Costos */}
+          <SectionCard icon={DollarSign} title="Costos">
+            <InfoRow label="Costo Base" value={`$${shipment.base_cost?.toFixed(2)}`} />
+            {shipment.last_mile_cost > 0 && (
+              <InfoRow label="Última Milla" value={`$${shipment.last_mile_cost?.toFixed(2)}`} />
+            )}
+            {shipment.express_surcharge > 0 && (
+              <InfoRow label="Recargo Express" value={`$${shipment.express_surcharge?.toFixed(2)}`} />
+            )}
+            <div className="flex items-center justify-between py-4">
+              <span className="font-bold text-slate-800">Total</span>
+              <span className="text-lg font-black" style={{ color: '#0284C7', fontFamily: "'Poppins', sans-serif" }}>
+                ${shipment.total_cost?.toFixed(2)}
+              </span>
+            </div>
+          </SectionCard>
 
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Fechas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Creado:</span>
-                <span className="font-medium">
-                  {new Date(shipment.created_at).toLocaleString('es-AR')}
-                </span>
-              </div>
+          {/* Fechas */}
+          <div className="lg:col-span-2">
+            <SectionCard icon={Calendar} title="Fechas">
+              <InfoRow
+                label="Creado"
+                value={new Date(shipment.created_at).toLocaleString('es-AR')}
+              />
               {shipment.estimated_delivery_at && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Entrega Estimada:</span>
-                  <span className="font-medium">
-                    {new Date(shipment.estimated_delivery_at).toLocaleString('es-AR')}
-                  </span>
-                </div>
+                <InfoRow
+                  label="Entrega Estimada"
+                  value={new Date(shipment.estimated_delivery_at).toLocaleString('es-AR')}
+                />
               )}
-            </CardContent>
-          </Card>
+            </SectionCard>
+          </div>
         </div>
       </div>
     </div>

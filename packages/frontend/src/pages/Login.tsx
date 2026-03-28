@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Package, Mail, Lock } from 'lucide-react';
+import { Package } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
@@ -50,16 +50,21 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12" style={{ background: '#F8FAFC' }}>
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--primary))]">
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{ background: 'linear-gradient(135deg, #38BDF8, #0284C7)', boxShadow: '0 4px 18px rgba(2,132,199,0.30)' }}
+            >
               <Package className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-[hsl(var(--secondary))]">Bienvenido a STN PQ's</h1>
-          <p className="mt-2 text-muted-foreground">Ingresá a tu cuenta para continuar</p>
+          <h1 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.02em' }}>
+            Bienvenido a STN PQ's
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">Ingresá a tu cuenta para continuar</p>
         </div>
 
         <Card>
@@ -98,9 +103,9 @@ export default function Login() {
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" className="rounded" />
-                  <span className="text-muted-foreground">Recordarme</span>
+                  <span className="text-slate-500">Recordarme</span>
                 </label>
-                <Link to="/forgot-password" className="text-[hsl(var(--primary))] hover:underline">
+                <Link to="/forgot-password" className="text-sky-600 hover:underline">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
@@ -109,9 +114,9 @@ export default function Login() {
                 Ingresar
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-sm text-slate-500">
                 ¿No tenés cuenta?{' '}
-                <Link to="/register" className="font-medium text-[hsl(var(--primary))] hover:underline">
+                <Link to="/register" className="font-medium text-sky-600 hover:underline">
                   Registrate aquí
                 </Link>
               </div>

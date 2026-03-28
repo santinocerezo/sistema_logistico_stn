@@ -4,9 +4,11 @@ import { persist } from 'zustand/middleware';
 interface User {
   id: string;
   email: string;
-  full_name: string;
-  role: string;
+  fullName: string;
+  role: 'user' | 'admin' | 'courier';
   balance: number;
+  phone?: string;
+  totpEnabled?: boolean;
 }
 
 interface AuthState {

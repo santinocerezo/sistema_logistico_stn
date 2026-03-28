@@ -76,7 +76,7 @@ export async function rateSession(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).user.userId;
     const { sessionId } = req.params;
-    const { rating, feedback } = req.body;
+    const { rating } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
       res.status(400).json({ error: 'Rating debe ser entre 1 y 5' });

@@ -13,9 +13,8 @@ import {
 import {
   calculateShipmentCost,
   findNearestBranch,
-  calculateEffectiveWeight,
-  type Coordinates,
 } from '../rates/rates.service';
+import type { Coordinates } from '../rates/rates.types';
 import { calculateDiscount, incrementPromoCodeUsage } from '../rates/discounts.service';
 import crypto from 'crypto';
 
@@ -165,7 +164,7 @@ export async function updateShipmentStatus(req: Request, res: Response): Promise
   try {
     const { id } = req.params;
     const { new_status, notes, location_lat, location_lng } = req.body;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const userRole = (req as any).user.role;
 
     if (!new_status) {
@@ -254,7 +253,7 @@ export async function createShipment(req: Request, res: Response): Promise<void>
     }
 
     const shipmentData = validation.data;
-    const userId = (req as any).user.id; // ID del usuario autenticado
+    const userId = (req as any).user.userId; // ID del usuario autenticado
 
     // Iniciar transacción
     await client.query('BEGIN');
@@ -500,7 +499,7 @@ export async function createShipment(req: Request, res: Response): Promise<void>
  */
 export async function listUserShipments(req: Request, res: Response): Promise<void> {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { status, limit = 50, offset = 0 } = req.query;
 
     let query = `
@@ -542,7 +541,7 @@ export async function listUserShipments(req: Request, res: Response): Promise<vo
 export async function getShipmentByTrackingCode(req: Request, res: Response): Promise<void> {
   try {
     const { trackingCode } = req.params;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     // Obtener envío
     const shipmentResult = await pool.query(
@@ -588,7 +587,7 @@ export async function cancelShipment(req: Request, res: Response): Promise<void>
   
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     await client.query('BEGIN');
 
@@ -669,5 +668,48 @@ export async function cancelShipment(req: Request, res: Response): Promise<void>
     res.status(500).json({ error: 'Error al cancelar envío' });
   } finally {
     client.release();
+  }
+}
+
+/**
+ * GET /shipments/track/:trackingCode — Seguimiento público sin autenticación
+ */
+export async function getPublicShipmentTracking(req: Request, res: Response): Promise<void> {
+  try {
+    const { trackingCode } = req.params;
+
+    const shipmentResult = await pool.query(
+      `SELECT s.tracking_code, s.status, s.shipment_type, s.modality,
+              s.dest_address, s.weight_kg, s.total_cost, s.created_at,
+              s.estimated_delivery_at,
+              ob.name as origin_branch_name,
+              db.name as dest_branch_name
+       FROM shipments s
+       LEFT JOIN branches ob ON s.origin_branch_id = ob.id
+       LEFT JOIN branches db ON s.dest_branch_id = db.id
+       WHERE s.tracking_code = $1`,
+      [trackingCode]
+    );
+
+    if (shipmentResult.rows.length === 0) {
+      res.status(404).json({ error: 'Envío no encontrado' });
+      return;
+    }
+
+    const historyResult = await pool.query(
+      `SELECT from_status, to_status, notes, created_at
+       FROM shipment_status_history
+       WHERE shipment_id = (SELECT id FROM shipments WHERE tracking_code = $1)
+       ORDER BY created_at ASC`,
+      [trackingCode]
+    );
+
+    res.status(200).json({
+      shipment: shipmentResult.rows[0],
+      status_history: historyResult.rows,
+    });
+  } catch (error) {
+    console.error('[getPublicShipmentTracking] Error:', error);
+    res.status(500).json({ error: 'Error al obtener seguimiento' });
   }
 }

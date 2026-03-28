@@ -90,7 +90,7 @@ export async function updateShipment(req: Request, res: Response): Promise<void>
   try {
     const { id } = req.params;
     const { dest_address, dest_lat, dest_lng, weight_kg, length_cm, width_cm, height_cm, special_instructions, status } = req.body;
-    const adminId = (req as any).user.id;
+    const adminId = (req as any).user.userId;
 
     await client.query('BEGIN');
 
@@ -238,7 +238,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const { balance, full_name, phone, is_active, role } = req.body;
-    const adminId = (req as any).user.id;
+    const adminId = (req as any).user.userId;
 
     await client.query('BEGIN');
 
@@ -573,7 +573,7 @@ export async function assignCourier(req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     const { courier_id } = req.body;
-    const adminId = (req as any).user.id;
+    const adminId = (req as any).user.userId;
 
     if (!courier_id) {
       res.status(400).json({ error: 'ID de repartidor requerido' });

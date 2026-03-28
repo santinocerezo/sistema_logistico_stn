@@ -63,3 +63,58 @@ export async function getChatHistory(req: Request, res: Response): Promise<void>
     res.status(500).json({ error: 'Error al obtener historial de chat' });
   }
 }
+
+// POST /chat/:shipmentId/messages - Enviar mensaje
+export async function sendChatMessage(req: Request, res: Response): Promise<void> {
+  try {
+    const { shipmentId } = req.params;
+    const { content } = req.body;
+    const userId = (req as any).user.userId;
+    const userRole = (req as any).user.role;
+
+    if (!content || !String(content).trim()) {
+      res.status(400).json({ error: 'El contenido del mensaje es requerido' });
+      return;
+    }
+
+    const shipmentResult = await pool.query(
+      `SELECT id, sender_id, assigned_courier_id FROM shipments WHERE id = $1`,
+      [shipmentId]
+    );
+
+    if (shipmentResult.rows.length === 0) {
+      res.status(404).json({ error: 'Envío no encontrado' });
+      return;
+    }
+
+    const shipment = shipmentResult.rows[0];
+    const isOwner = shipment.sender_id === userId;
+    const isAdmin = userRole === 'admin';
+    let isCourier = false;
+
+    if (shipment.assigned_courier_id) {
+      const courierCheck = await pool.query(
+        `SELECT id FROM couriers WHERE id = $1 AND user_id = $2`,
+        [shipment.assigned_courier_id, userId]
+      );
+      isCourier = courierCheck.rows.length > 0;
+    }
+
+    if (!isOwner && !isCourier && !isAdmin) {
+      res.status(403).json({ error: 'No tienes permiso para enviar mensajes en este chat' });
+      return;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO chat_messages (shipment_id, sender_id, message)
+       VALUES ($1, $2, $3)
+       RETURNING id, shipment_id, sender_id, message, created_at`,
+      [shipmentId, userId, String(content).trim()]
+    );
+
+    res.status(201).json({ message: result.rows[0] });
+  } catch (error) {
+    console.error('Error al enviar mensaje:', error);
+    res.status(500).json({ error: 'Error al enviar mensaje' });
+  }
+}

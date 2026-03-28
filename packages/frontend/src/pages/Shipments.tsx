@@ -42,10 +42,10 @@ export default function Shipments() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: any; label: string }> = {
       'Pendiente': { variant: 'warning', label: 'Pendiente' },
-      'En_Sucursal': { variant: 'default', label: 'En Sucursal' },
+      'En Sucursal': { variant: 'default', label: 'En Sucursal' },
       'Asignado': { variant: 'primary', label: 'Asignado' },
-      'En_Camino': { variant: 'primary', label: 'En Camino' },
-      'En_Entrega': { variant: 'primary', label: 'En Entrega' },
+      'En Camino': { variant: 'primary', label: 'En Camino' },
+      'En Entrega': { variant: 'primary', label: 'En Entrega' },
       'Entregado': { variant: 'success', label: 'Entregado' },
       'Entrega_Fallida': { variant: 'error', label: 'Entrega Fallida' },
       'Cancelado': { variant: 'error', label: 'Cancelado' },
@@ -63,21 +63,18 @@ export default function Shipments() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent"></div>
-          <p className="text-muted-foreground">Cargando envíos...</p>
-        </div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" style={{ borderColor: '#BAE6FD', borderTopColor: 'transparent' }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-10" style={{ background: '#F8FAFC' }}>
       <div className="container-custom">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[hsl(var(--secondary))]">Mis Envíos</h1>
-            <p className="text-muted-foreground">Gestiona todos tus envíos</p>
+            <h1 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.02em' }}>Mis Envíos</h1>
+            <p className="text-sm text-slate-500 mt-1">Gestioná todos tus envíos</p>
           </div>
           <Link to="/shipments/new">
             <Button variant="primary" size="lg">
@@ -89,10 +86,10 @@ export default function Shipments() {
 
         {/* Filters */}
         <Card className="mb-6">
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   placeholder="Buscar por código de tracking..."
                   value={search}
@@ -101,16 +98,17 @@ export default function Shipments() {
                 />
               </div>
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="input pl-10"
+                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="Pendiente">Pendiente</option>
-                  <option value="En_Camino">En Camino</option>
-                  <option value="En_Entrega">En Entrega</option>
+                  <option value="En Camino">En Camino</option>
+                  <option value="En Entrega">En Entrega</option>
                   <option value="Entregado">Entregado</option>
                   <option value="Cancelado">Cancelado</option>
                 </select>
@@ -122,57 +120,50 @@ export default function Shipments() {
         {/* Shipments List */}
         {filteredShipments.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <Package className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-bold">No se encontraron envíos</h3>
-              <p className="mb-4 text-muted-foreground">
+            <CardContent className="py-16 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: '#F0F9FF' }}>
+                <Package className="h-7 w-7" style={{ color: '#0284C7' }} />
+              </div>
+              <h3 className="mb-1 font-bold text-slate-800">No se encontraron envíos</h3>
+              <p className="text-sm text-slate-400">
                 {search || statusFilter !== 'all'
-                  ? 'Intenta con otros filtros'
+                  ? 'Intentá con otros filtros'
                   : 'Todavía no tenés envíos registrados'}
               </p>
               {!search && statusFilter === 'all' && (
-                <Link to="/shipments/new">
-                  <Button variant="primary">Crear Primer Envío</Button>
+                <Link to="/shipments/new" className="mt-4 inline-block">
+                  <Button>Crear Primer Envío</Button>
                 </Link>
               )}
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredShipments.map((shipment) => (
               <Card key={shipment.id} hover>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[hsl(var(--primary))]/10">
-                        <Package className="h-6 w-6 text-[hsl(var(--primary))]" />
-                      </div>
-                      <div>
-                        <p className="font-bold">{shipment.tracking_code}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {shipment.shipment_type} - {shipment.modality}
+                <CardContent className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: '#F0F9FF' }}>
+                    <Package className="h-5 w-5" style={{ color: '#0284C7' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900 text-sm">{shipment.tracking_code}</p>
+                    <p className="text-xs text-slate-400">
+                      {shipment.shipment_type} · {shipment.modality} · {new Date(shipment.created_at).toLocaleDateString('es-AR')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    {getStatusBadge(shipment.status)}
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-slate-800">${shipment.total_cost?.toFixed(2)}</p>
+                      {shipment.estimated_delivery_at && (
+                        <p className="text-xs text-slate-400">
+                          Est: {new Date(shipment.estimated_delivery_at).toLocaleDateString('es-AR')}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Creado: {new Date(shipment.created_at).toLocaleDateString('es-AR')}
-                        </p>
-                      </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-4">
-                      {getStatusBadge(shipment.status)}
-                      <div className="text-right">
-                        <p className="font-bold">${shipment.total_cost?.toFixed(2)}</p>
-                        {shipment.estimated_delivery_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Est: {new Date(shipment.estimated_delivery_at).toLocaleDateString('es-AR')}
-                          </p>
-                        )}
-                      </div>
-                      <Link to={`/shipments/${shipment.id}`}>
-                        <Button variant="outline" size="sm">
-                          Ver Detalles
-                        </Button>
-                      </Link>
-                    </div>
+                    <Link to={`/shipments/${shipment.tracking_code}`}>
+                      <Button variant="outline" size="sm">Ver</Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

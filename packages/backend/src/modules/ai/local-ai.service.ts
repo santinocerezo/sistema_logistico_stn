@@ -123,11 +123,11 @@ export class LocalAIService {
     return `Tienes ${context.total_shipments} envíos en total.`;
   }
 
-  private shipmentStatusResponse(message: string, context: UserContext): string {
+  private shipmentStatusResponse(_message: string, _context: UserContext): string {
     return 'Puedes consultar el estado de tus envíos en la sección Mis Envíos.';
   }
 
-  private createShipmentResponse(context: UserContext): string {
+  private createShipmentResponse(_context: UserContext): string {
     return 'Para crear un nuevo envío, ve a la sección Nuevo Envío en tu perfil.';
   }
 

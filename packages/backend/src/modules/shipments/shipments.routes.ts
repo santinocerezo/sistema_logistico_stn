@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { publicQuoteRateLimiter } from '../../middleware/rateLimiter';
-import { 
-  getPublicQuote, 
-  createShipment, 
+import {
+  getPublicQuote,
+  createShipment,
   updateShipmentStatus,
   listUserShipments,
   getShipmentByTrackingCode,
+  getPublicShipmentTracking,
   cancelShipment
 } from './shipments.controller';
 import { authenticateToken } from '../../middleware/auth';
@@ -18,6 +19,11 @@ const router = Router();
  * Valida: Requerimientos 51.1, 51.2, 51.3, 15.17
  */
 router.post('/quote', publicQuoteRateLimiter, getPublicQuote);
+
+/**
+ * GET /shipments/track/:trackingCode — Seguimiento público sin autenticación
+ */
+router.get('/track/:trackingCode', getPublicShipmentTracking);
 
 /**
  * POST /shipments — Crear un nuevo envío (requiere autenticación)

@@ -1,9 +1,12 @@
 import { Queue, Worker, Job } from 'bullmq';
-import Redis from 'ioredis';
 
-const connection = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
+const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const parsedUrl = new URL(redisUrl);
+const connection = {
+  host: parsedUrl.hostname || 'localhost',
+  port: parseInt(parsedUrl.port || '6379'),
+  maxRetriesPerRequest: null as null,
+};
 
 interface NotificationJob {
   userId: number;
@@ -38,7 +41,7 @@ export const notificationQueue = new Queue<NotificationJob>('notifications', {
 export const notificationWorker = new Worker<NotificationJob>(
   'notifications',
   async (job: Job<NotificationJob>) => {
-    const { userId, type, title, message, channels, relatedEntityType, relatedEntityId } = job.data;
+    const { userId, type, title, message, channels } = job.data;
 
     console.log(`Procesando notificacion para usuario ${userId}: ${title}`);
 

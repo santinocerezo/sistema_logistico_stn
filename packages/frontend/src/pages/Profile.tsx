@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { User, Mail, Phone, Shield, LogOut, Pencil, X, Check } from 'lucide-react';
+import Button from '../components/ui/Button';
 
 export const Profile = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, setAuth } = useAuthStore();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
@@ -11,15 +15,19 @@ export const Profile = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      await api.patch('/profile/me', formData);
-      alert('Perfil actualizado exitosamente');
+      await api.patch('/profile', formData);
+      const token = localStorage.getItem('token') || '';
+      setAuth({ ...user!, ...formData }, token);
+      setSuccess('Perfil actualizado correctamente');
       setEditing(false);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al actualizar perfil');
@@ -28,135 +36,159 @@ export const Profile = () => {
     }
   };
 
-  const handleLogout = async () => {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      await logout();
-      window.location.href = '/';
-    }
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
+  const roleLabel = user?.role === 'admin' ? 'Administrador' : user?.role === 'courier' ? 'Repartidor' : 'Usuario';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <a href="/dashboard" className="text-xl font-bold text-gray-900">
-                ← STN PQ's
-              </a>
-            </div>
+    <div className="min-h-screen" style={{ background: '#F8FAFC' }}>
+      <div className="container-custom py-10 max-w-2xl mx-auto">
+
+        {/* Header */}
+        <div className="mb-8">
+          <h1
+            className="text-3xl font-black text-slate-900"
+            style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.02em' }}
+          >
+            Mi Perfil
+          </h1>
+          <p className="text-slate-500 mt-1 text-sm">Gestioná tu información personal</p>
+        </div>
+
+        {/* Avatar + nombre */}
+        <div
+          className="mb-6 flex items-center gap-5 rounded-2xl p-6"
+          style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', boxShadow: '0 4px 24px rgba(2,132,199,0.15)' }}
+        >
+          <div
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-black text-white"
+            style={{ background: 'linear-gradient(135deg, #38BDF8, #0284C7)' }}
+          >
+            {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              {user?.fullName}
+            </p>
+            <p className="text-sm" style={{ color: '#94A3B8' }}>{user?.email}</p>
+            <span
+              className="mt-1.5 inline-block rounded-full px-3 py-0.5 text-xs font-bold"
+              style={{ background: 'rgba(125,211,252,0.15)', color: '#7DD3FC' }}
+            >
+              {roleLabel}
+            </span>
           </div>
         </div>
-      </nav>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Mi Perfil</h2>
-            {!editing && (
-              <button
-                onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-              >
-                Editar
-              </button>
-            )}
+        {/* Alerts */}
+        {error && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <X className="h-4 w-4 shrink-0" /> {error}
           </div>
+        )}
+        {success && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <Check className="h-4 w-4 shrink-0" /> {success}
+          </div>
+        )}
 
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
+        {/* Datos */}
+        <div className="rounded-2xl bg-white p-6" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)', border: '1px solid #E2E8F0' }}>
           {editing ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                   Nombre Completo
                 </label>
                 <input
-                  id="fullName"
                   type="text"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 outline-none transition"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#38BDF8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(56,189,248,0.15)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.boxShadow = 'none'; }}
                 />
               </div>
-
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                   Teléfono
                 </label>
                 <input
-                  id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 outline-none transition"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#38BDF8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(56,189,248,0.15)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.boxShadow = 'none'; }}
                 />
               </div>
-
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" type="button" onClick={() => setEditing(false)} style={{ flex: 1 }}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
-                >
-                  {loading ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
+                </Button>
+                <Button type="submit" loading={loading} style={{ flex: 1 }}>
+                  Guardar Cambios
+                </Button>
               </div>
             </form>
           ) : (
-            <dl className="space-y-4">
-              <div>
-                <dt className="text-sm text-gray-600">Correo Electrónico</dt>
-                <dd className="mt-1 text-lg font-medium text-gray-900">{user?.email}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-600">Nombre Completo</dt>
-                <dd className="mt-1 text-lg font-medium text-gray-900">{user?.fullName}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-600">Teléfono</dt>
-                <dd className="mt-1 text-lg font-medium text-gray-900">{user?.phone || 'No especificado'}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-600">Rol</dt>
-                <dd className="mt-1">
-                  <span className="inline-flex px-3 py-1 text-sm font-medium rounded-full bg-primary-100 text-primary-800">
-                    {user?.role === 'admin' ? 'Administrador' : user?.role === 'courier' ? 'Repartidor' : 'Usuario'}
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-600">Autenticación 2FA</dt>
-                <dd className="mt-1 text-lg font-medium text-gray-900">
-                  {user?.totpEnabled ? (
-                    <span className="text-green-600">Activada</span>
-                  ) : (
-                    <span className="text-gray-500">Desactivada</span>
-                  )}
-                </dd>
+            <dl className="space-y-5">
+              {[
+                { icon: Mail, label: 'Correo Electrónico', value: user?.email },
+                { icon: User, label: 'Nombre Completo', value: user?.fullName },
+                { icon: Phone, label: 'Teléfono', value: user?.phone || 'No especificado' },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center gap-4">
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                    style={{ background: '#F0F9FF' }}
+                  >
+                    <Icon className="h-4.5 w-4.5" style={{ color: '#0284C7' }} />
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</dt>
+                    <dd className="text-sm font-semibold text-slate-800 mt-0.5">{value}</dd>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: '#F0F9FF' }}>
+                  <Shield className="h-4.5 w-4.5" style={{ color: '#0284C7' }} />
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">Autenticación 2FA</dt>
+                  <dd className="mt-0.5">
+                    <span
+                      className="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold"
+                      style={user?.totpEnabled ? { background: '#DCFCE7', color: '#16A34A' } : { background: '#F1F5F9', color: '#64748B' }}
+                    >
+                      {user?.totpEnabled ? 'Activada' : 'Desactivada'}
+                    </span>
+                  </dd>
+                </div>
               </div>
             </dl>
           )}
 
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
+          {!editing && (
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <Button variant="outline" onClick={() => setEditing(true)} style={{ width: '100%' }}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar Perfil
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Logout */}
+        <div className="mt-4">
+          <Button variant="danger" onClick={handleLogout} style={{ width: '100%' }}>
+            <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
+          </Button>
         </div>
       </div>
     </div>

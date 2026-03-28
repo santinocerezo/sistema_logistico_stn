@@ -48,7 +48,7 @@ export async function getAllFAQs(req: Request, res: Response): Promise<void> {
 }
 
 // GET /faq/categories - Obtener categorias disponibles
-export async function getCategories(req: Request, res: Response): Promise<void> {
+export async function getCategories(_req: Request, res: Response): Promise<void> {
   try {
     const result = await pool.query(
       `SELECT DISTINCT category, COUNT(*) as count

@@ -13,7 +13,7 @@ interface ChatMessage {
 // Iniciar flujo de reclamacion con Agente IA
 export async function initiateClaimFlow(
   shipmentId: number,
-  userId: number,
+  _userId: number,
   io: any
 ): Promise<void> {
   try {
@@ -156,7 +156,7 @@ Menciona que cuando haya una resolucion se le notificara al usuario.`;
 // Contactar al repartidor para obtener su version
 async function contactCourier(
   shipmentId: number,
-  courierUserId: number,
+  _courierUserId: number,
   io: any
 ): Promise<void> {
   const courierMessage = `Hola, soy el Agente IA de STN PQ's. Se ha iniciado una reclamacion sobre el envio que tienes asignado. Por favor, cuentame tu version de lo que sucedio.`;

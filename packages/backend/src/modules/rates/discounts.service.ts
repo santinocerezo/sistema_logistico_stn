@@ -3,7 +3,7 @@
  * Implementa descuentos por volumen y validación de códigos promocionales
  */
 
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 export interface VolumeDiscountLevel {
   min_shipments: number;
@@ -46,7 +46,7 @@ const VOLUME_DISCOUNT_LEVELS: VolumeDiscountLevel[] = [
  */
 export async function calculateVolumeDiscount(
   userId: string,
-  pool: Pool
+  pool: Pool | PoolClient
 ): Promise<number> {
   // Contar envíos del último mes (30 días)
   const result = await pool.query(
@@ -79,7 +79,7 @@ export async function calculateVolumeDiscount(
 export async function updateUserDiscountLevel(
   userId: string,
   discountLevel: number,
-  pool: Pool
+  pool: Pool | PoolClient
 ): Promise<void> {
   await pool.query(
     `UPDATE users
@@ -97,7 +97,7 @@ export async function updateUserDiscountLevel(
  */
 export async function validatePromoCode(
   code: string,
-  pool: Pool
+  pool: Pool | PoolClient
 ): Promise<PromoCode | null> {
   const result = await pool.query(
     `SELECT id, code, discount_type, discount_value, max_uses, used_count,
@@ -144,7 +144,7 @@ export async function validatePromoCode(
  */
 export async function incrementPromoCodeUsage(
   promoCodeId: string,
-  pool: Pool
+  pool: Pool | PoolClient
 ): Promise<void> {
   await pool.query(
     `UPDATE promo_codes
@@ -166,7 +166,7 @@ export async function calculateDiscount(
   userId: string,
   baseCost: number,
   promoCode: string | null,
-  pool: Pool
+  pool: Pool | PoolClient
 ): Promise<DiscountResult> {
   // Calcular descuento por volumen
   const volumeDiscountPercentage = await calculateVolumeDiscount(userId, pool);
