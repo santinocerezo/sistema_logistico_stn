@@ -182,7 +182,7 @@ export const AdminDashboard = () => {
                   <div>
                     <p className="text-sm text-gray-600">Ingresos</p>
                     <p className="text-3xl font-bold text-gray-900 mt-2">
-                      ${metrics.revenue.toFixed(2)}
+                      ${parseFloat(String(metrics.revenue || 0)).toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-purple-100 rounded-full p-3">
@@ -277,7 +277,7 @@ export const AdminDashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${shipment.totalCost.toFixed(2)}
+                        ${parseFloat(String(shipment.totalCost || 0)).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(shipment.createdAt).toLocaleDateString()}

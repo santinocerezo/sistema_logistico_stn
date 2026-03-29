@@ -524,10 +524,10 @@ export const CreateShipment = () => {
                 <div className="bg-primary-50 border-2 border-primary-200 rounded-lg p-6">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-medium text-gray-900">Costo Total:</span>
-                    <span className="text-3xl font-bold text-primary-600">${quote.toFixed(2)}</span>
+                    <span className="text-3xl font-bold text-primary-600">${parseFloat(String(quote || 0)).toFixed(2)}</span>
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
-                    Tu saldo actual: ${user?.balance.toFixed(2)}
+                    Tu saldo actual: ${parseFloat(String(user?.balance || 0)).toFixed(2)}
                   </p>
                 </div>
               )}

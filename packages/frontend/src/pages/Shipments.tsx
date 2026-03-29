@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Package, Search, Filter, Plus } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -23,17 +23,20 @@ export default function Shipments() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const location = useLocation();
 
   useEffect(() => {
     loadShipments();
-  }, []);
+  }, [location.key]);
 
   const loadShipments = async () => {
+    setLoading(true);
     try {
       const response = await api.get('/shipments');
       setShipments(response.data.shipments || []);
     } catch (error) {
       console.error('Error loading shipments:', error);
+      setShipments([]);
     } finally {
       setLoading(false);
     }
@@ -154,7 +157,7 @@ export default function Shipments() {
                   <div className="flex items-center gap-4 shrink-0">
                     {getStatusBadge(shipment.status)}
                     <div className="text-right">
-                      <p className="text-sm font-bold text-slate-800">${shipment.total_cost?.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-slate-800">${parseFloat(String(shipment.total_cost || 0)).toFixed(2)}</p>
                       {shipment.estimated_delivery_at && (
                         <p className="text-xs text-slate-400">
                           Est: {new Date(shipment.estimated_delivery_at).toLocaleDateString('es-AR')}

@@ -48,11 +48,32 @@ export default function Header() {
             >
               <Package className="h-5 w-5 text-white" />
             </div>
-            <span
-              className="text-lg font-black text-slate-900"
-              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.02em' }}
-            >
-              STN PQ's
+            <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+              <span
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 900,
+                  fontSize: '15px',
+                  letterSpacing: '0.08em',
+                  color: '#0F172A',
+                  textTransform: 'uppercase',
+                }}
+              >
+                STN
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 600,
+                  fontSize: '9px',
+                  letterSpacing: '0.22em',
+                  color: '#0284C7',
+                  textTransform: 'uppercase',
+                  marginTop: '1px',
+                }}
+              >
+                LOGISTICS
+              </span>
             </span>
           </Link>
 
@@ -124,7 +145,7 @@ export default function Header() {
                     Saldo
                   </p>
                   <p className="text-sm font-bold text-sky-700">
-                    ${user?.balance?.toFixed(2)}
+                    ${parseFloat(String(user?.balance || 0)).toFixed(2)}
                   </p>
                 </div>
 
@@ -216,7 +237,7 @@ export default function Header() {
                   <div className="my-2 border-t" style={{ borderColor: '#E0F2FE' }} />
                   <div className="px-4 py-2">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo disponible</p>
-                    <p className="text-base font-bold text-sky-700">${user?.balance?.toFixed(2)}</p>
+                    <p className="text-base font-bold text-sky-700">${parseFloat(String(user?.balance || 0)).toFixed(2)}</p>
                   </div>
                   <button
                     onClick={() => { handleLogout(); setMobileMenuOpen(false); }}

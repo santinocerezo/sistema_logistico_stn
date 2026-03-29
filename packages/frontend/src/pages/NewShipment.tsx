@@ -1,10 +1,98 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, MapPin, Weight, DollarSign, ArrowRight, ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
+import { Package, MapPin, Weight, DollarSign, ArrowRight, ArrowLeft, Truck, Zap, CheckCircle, Box } from 'lucide-react';
 import api from '../lib/api';
+
+/* ─── Nominatim Autocomplete ─────────────────────────────────────────── */
+
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
+function AddressAutocomplete({
+  value,
+  onChange,
+  onSelect,
+  error,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onSelect: (address: string, lat: number, lng: number) => void;
+  error?: string;
+}) {
+  const [results, setResults] = useState<NominatimResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    onChange(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.length < 3) { setResults([]); setOpen(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=5&addressdetails=1`,
+          { headers: { 'Accept-Language': 'es' } }
+        );
+        const data: NominatimResult[] = await res.json();
+        setResults(data);
+        setOpen(data.length > 0);
+      } catch {
+        setResults([]);
+      }
+    }, 400);
+  };
+
+  const handleSelect = (item: NominatimResult) => {
+    onSelect(item.display_name, parseFloat(item.lat), parseFloat(item.lon));
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>
+        Dirección de entrega *
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={handleChange}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="Ej: Av. Corrientes 1234, Buenos Aires"
+        autoComplete="off"
+        className="w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none transition-all"
+        style={{ borderColor: error ? '#EF4444' : '#E2E8F0', background: '#fff', fontFamily: "'Inter', sans-serif" }}
+        onFocus={(e) => { if (!error) e.currentTarget.style.borderColor = '#38BDF8'; }}
+        onBlurCapture={(e) => { if (!error) e.currentTarget.style.borderColor = '#E2E8F0'; }}
+      />
+      {open && (
+        <ul
+          className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl bg-white"
+          style={{ border: '1px solid #E2E8F0', boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
+        >
+          {results.map((item) => (
+            <li
+              key={item.place_id}
+              onMouseDown={() => handleSelect(item)}
+              className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-sky-50"
+              style={{ color: '#334155', borderBottom: '1px solid #F8FAFC' }}
+            >
+              <MapPin className="h-3.5 w-3.5 shrink-0" style={{ color: '#0284C7' }} />
+              {item.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+/* ─── Types ──────────────────────────────────────────────────────────── */
 
 interface Branch {
   id: string;
@@ -27,8 +115,8 @@ interface FormData {
   origin_branch_id: string;
   dest_branch_id: string;
   dest_address: string;
-  dest_lat: string;
-  dest_lng: string;
+  dest_lat: number;
+  dest_lng: number;
   shipment_type: 'S2S' | 'S2D';
   modality: 'Normal' | 'Express';
   weight_kg: string;
@@ -39,6 +127,70 @@ interface FormData {
   declared_value: string;
   has_insurance: boolean;
 }
+
+/* ─── Sub-components ─────────────────────────────────────────────────── */
+
+function SectionCard({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-2xl bg-white"
+      style={{ border: '1px solid #E2E8F0', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+    >
+      <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: '1px solid #F1F5F9' }}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: '#F0F9FF' }}>
+          <Icon className="h-4 w-4" style={{ color: '#0284C7' }} />
+        </div>
+        <h3 className="font-bold text-slate-900" style={{ fontFamily: "'Poppins', sans-serif" }}>{title}</h3>
+      </div>
+      <div className="p-6">{children}</div>
+    </div>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>
+      {children}
+    </label>
+  );
+}
+
+function StyledSelect({ value, onChange, children, error }: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  children: React.ReactNode;
+  error?: string;
+}) {
+  return (
+    <>
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none transition-all"
+        style={{ borderColor: error ? '#EF4444' : '#E2E8F0', background: '#fff', fontFamily: "'Inter', sans-serif" }}
+      >
+        {children}
+      </select>
+      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+    </>
+  );
+}
+
+function StyledInput({ label, error, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <input
+        {...props}
+        className="w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none transition-all"
+        style={{ borderColor: error ? '#EF4444' : '#E2E8F0', background: '#fff', fontFamily: "'Inter', sans-serif" }}
+      />
+      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+/* ─── Main Component ─────────────────────────────────────────────────── */
 
 export default function NewShipment() {
   const navigate = useNavigate();
@@ -52,8 +204,8 @@ export default function NewShipment() {
     origin_branch_id: '',
     dest_branch_id: '',
     dest_address: '',
-    dest_lat: '',
-    dest_lng: '',
+    dest_lat: 0,
+    dest_lng: 0,
     shipment_type: 'S2S',
     modality: 'Normal',
     weight_kg: '',
@@ -71,34 +223,28 @@ export default function NewShipment() {
       .catch(() => console.error('Error al cargar sucursales'));
   }, []);
 
-  const set = (field: keyof FormData, value: any) => {
+  const set = (field: keyof FormData, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
-  };
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
-
-    if (!form.origin_branch_id) errors.origin_branch_id = 'Selecciona una sucursal de origen';
-    if (form.shipment_type === 'S2S' && !form.dest_branch_id) {
-      errors.dest_branch_id = 'Selecciona una sucursal de destino';
-    }
+    if (!form.origin_branch_id) errors.origin_branch_id = 'Seleccioná una sucursal de origen';
+    if (form.shipment_type === 'S2S' && !form.dest_branch_id)
+      errors.dest_branch_id = 'Seleccioná una sucursal de destino';
     if (form.shipment_type === 'S2D') {
-      if (!form.dest_address) errors.dest_address = 'Ingresa la dirección de entrega';
-      if (!form.dest_lat) errors.dest_lat = 'Ingresa la latitud del destino';
-      if (!form.dest_lng) errors.dest_lng = 'Ingresa la longitud del destino';
+      if (!form.dest_address) errors.dest_address = 'Ingresá la dirección de entrega';
+      else if (!form.dest_lat || !form.dest_lng) errors.dest_address = 'Seleccioná una dirección del listado';
     }
     if (!form.weight_kg || parseFloat(form.weight_kg) <= 0) errors.weight_kg = 'El peso debe ser mayor a 0';
     if (!form.length_cm || parseFloat(form.length_cm) <= 0) errors.length_cm = 'Requerido';
     if (!form.width_cm || parseFloat(form.width_cm) <= 0) errors.width_cm = 'Requerido';
     if (!form.height_cm || parseFloat(form.height_cm) <= 0) errors.height_cm = 'Requerido';
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleQuote = async () => {
     if (!validate()) return;
-
     const originBranch = branches.find((b) => b.id === form.origin_branch_id);
     if (!originBranch) return;
 
@@ -119,10 +265,7 @@ export default function NewShipment() {
       if (!destBranch) return;
       quotePayload.destination = { lat: parseFloat(String(destBranch.lat)), lng: parseFloat(String(destBranch.lng)) };
     } else {
-      quotePayload.destAddress = {
-        lat: parseFloat(form.dest_lat),
-        lng: parseFloat(form.dest_lng),
-      };
+      quotePayload.destAddress = { lat: form.dest_lat, lng: form.dest_lng };
     }
 
     try {
@@ -152,17 +295,15 @@ export default function NewShipment() {
         declared_value: parseFloat(form.declared_value) || 0,
         has_insurance: form.has_insurance,
       };
-
       if (form.shipment_type === 'S2S') {
         payload.dest_branch_id = form.dest_branch_id;
       } else {
         payload.dest_address = form.dest_address;
-        payload.dest_lat = parseFloat(form.dest_lat);
-        payload.dest_lng = parseFloat(form.dest_lng);
+        payload.dest_lat = form.dest_lat;
+        payload.dest_lng = form.dest_lng;
       }
-
-      const response = await api.post('/shipments', payload);
-      navigate(`/shipments/${response.data.shipment.tracking_code}`);
+      await api.post('/shipments', payload);
+      navigate('/shipments', { replace: true });
     } catch (error: any) {
       alert(error.response?.data?.error || 'Error al crear envío');
     } finally {
@@ -170,307 +311,337 @@ export default function NewShipment() {
     }
   };
 
+  /* ── Render ── */
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-8">
-      <div className="container-custom max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Nuevo Envío</h1>
-          <p className="text-slate-500">Completa los datos para crear tu envío</p>
-        </div>
+    <div className="min-h-screen" style={{ background: '#F8FAFC', fontFamily: "'Inter', sans-serif" }}>
 
-        {/* Stepper */}
-        <div className="mb-8 flex items-center justify-center gap-4">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-sky-600' : 'text-gray-400'}`}>
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${step >= 1 ? 'bg-sky-600' : 'bg-gray-300'} text-white`}>
-              1
+      {/* Hero header */}
+      <div
+        className="w-full px-4 py-12"
+        style={{ background: 'linear-gradient(135deg, #0C4A6E 0%, #0284C7 60%, #38BDF8 100%)' }}
+      >
+        <div className="container-custom max-w-4xl">
+          <div className="flex items-center gap-4">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+            >
+              <Package className="h-6 w-6 text-white" />
             </div>
-            <span className="font-medium">Datos del Envío</span>
-          </div>
-          <ArrowRight className="h-5 w-5 text-gray-400" />
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-sky-600' : 'text-gray-400'}`}>
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${step >= 2 ? 'bg-sky-600' : 'bg-gray-300'} text-white`}>
-              2
+            <div>
+              <h1 className="text-3xl font-black text-white" style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.02em' }}>
+                Nuevo Envío
+              </h1>
+              <p className="mt-0.5 text-sm text-sky-200">Completá los datos y cotizá al instante</p>
             </div>
-            <span className="font-medium">Confirmación</span>
           </div>
-        </div>
 
-        {step === 1 && (
-          <div className="space-y-6">
-            {/* Tipo de Envío */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tipo de Envío</CardTitle>
-                <CardDescription>Selecciona cómo quieres enviar tu paquete</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${form.shipment_type === 'S2S' ? 'border-sky-400 bg-sky-600/5' : 'border-border'}`}>
-                    <input type="radio" name="shipment_type" value="S2S" checked={form.shipment_type === 'S2S'} onChange={() => set('shipment_type', 'S2S')} className="sr-only" />
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-6 w-6 text-sky-600" />
-                      <div>
-                        <p className="font-bold">Sucursal a Sucursal</p>
-                        <p className="text-sm text-slate-500">Más económico</p>
-                      </div>
-                    </div>
-                  </label>
-                  <label className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${form.shipment_type === 'S2D' ? 'border-sky-400 bg-sky-600/5' : 'border-border'}`}>
-                    <input type="radio" name="shipment_type" value="S2D" checked={form.shipment_type === 'S2D'} onChange={() => set('shipment_type', 'S2D')} className="sr-only" />
-                    <div className="flex items-center gap-3">
-                      <Package className="h-6 w-6 text-sky-600" />
-                      <div>
-                        <p className="font-bold">Sucursal a Domicilio</p>
-                        <p className="text-sm text-slate-500">Entrega en puerta</p>
-                      </div>
-                    </div>
-                  </label>
+          {/* Stepper */}
+          <div className="mt-8 flex items-center gap-3">
+            {[
+              { n: 1, label: 'Datos del envío' },
+              { n: 2, label: 'Confirmación' },
+            ].map(({ n, label }, i, arr) => (
+              <div key={n} className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all"
+                    style={
+                      step >= n
+                        ? { background: '#fff', color: '#0284C7' }
+                        : { background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }
+                    }
+                  >
+                    {step > n ? <CheckCircle className="h-4 w-4" /> : n}
+                  </div>
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: step >= n ? '#fff' : 'rgba(255,255,255,0.55)' }}
+                  >
+                    {label}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+                {i < arr.length - 1 && (
+                  <div className="h-px w-12" style={{ background: 'rgba(255,255,255,0.25)' }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="container-custom max-w-4xl py-10">
+
+        {/* ── STEP 1 ── */}
+        {step === 1 && (
+          <div className="space-y-5">
+
+            {/* Tipo de envío */}
+            <SectionCard icon={Truck} title="Tipo de Envío">
+              <div className="grid gap-3 md:grid-cols-2">
+                {([
+                  { value: 'S2S', icon: MapPin, title: 'Sucursal a Sucursal', sub: 'Más económico · retiro en sucursal' },
+                  { value: 'S2D', icon: Package, title: 'Sucursal a Domicilio', sub: 'Entrega en puerta' },
+                ] as const).map(({ value, icon: Icon, title, sub }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => set('shipment_type', value)}
+                    className="flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all"
+                    style={
+                      form.shipment_type === value
+                        ? { borderColor: '#38BDF8', background: '#F0F9FF' }
+                        : { borderColor: '#E2E8F0', background: '#fff' }
+                    }
+                  >
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: form.shipment_type === value ? '#E0F2FE' : '#F8FAFC' }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color: form.shipment_type === value ? '#0284C7' : '#94A3B8' }} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">{title}</p>
+                      <p className="text-xs text-slate-500">{sub}</p>
+                    </div>
+                    {form.shipment_type === value && (
+                      <CheckCircle className="ml-auto h-5 w-5 shrink-0" style={{ color: '#0284C7' }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </SectionCard>
 
             {/* Modalidad */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Modalidad</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${form.modality === 'Normal' ? 'border-sky-400 bg-sky-600/5' : 'border-border'}`}>
-                    <input type="radio" name="modality" value="Normal" checked={form.modality === 'Normal'} onChange={() => set('modality', 'Normal')} className="sr-only" />
+            <SectionCard icon={Zap} title="Modalidad">
+              <div className="grid gap-3 md:grid-cols-2">
+                {([
+                  { value: 'Normal', title: 'Normal', sub: '3-5 días hábiles' },
+                  { value: 'Express', title: 'Express', sub: '24-48 horas · +40% de costo' },
+                ] as const).map(({ value, title, sub }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => set('modality', value)}
+                    className="flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all"
+                    style={
+                      form.modality === value
+                        ? { borderColor: '#38BDF8', background: '#F0F9FF' }
+                        : { borderColor: '#E2E8F0', background: '#fff' }
+                    }
+                  >
                     <div>
-                      <p className="font-bold">Normal</p>
-                      <p className="text-sm text-slate-500">3-5 días hábiles</p>
+                      <p className="font-bold text-slate-900">{title}</p>
+                      <p className="text-xs text-slate-500">{sub}</p>
                     </div>
-                  </label>
-                  <label className={`cursor-pointer rounded-lg border-2 p-4 transition-colors ${form.modality === 'Express' ? 'border-sky-400 bg-sky-600/5' : 'border-border'}`}>
-                    <input type="radio" name="modality" value="Express" checked={form.modality === 'Express'} onChange={() => set('modality', 'Express')} className="sr-only" />
-                    <div>
-                      <p className="font-bold">Express</p>
-                      <p className="text-sm text-slate-500">24-48 horas</p>
-                    </div>
-                  </label>
-                </div>
-              </CardContent>
-            </Card>
+                    {form.modality === value && (
+                      <CheckCircle className="ml-auto h-5 w-5 shrink-0" style={{ color: '#0284C7' }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </SectionCard>
 
             {/* Sucursales */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Sucursales
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <SectionCard icon={MapPin} title="Origen y Destino">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal de Origen *</label>
-                  <select
+                  <FieldLabel>Sucursal de Origen *</FieldLabel>
+                  <StyledSelect
                     value={form.origin_branch_id}
                     onChange={(e) => set('origin_branch_id', e.target.value)}
-                    className="input w-full"
+                    error={formErrors.origin_branch_id}
                   >
-                    <option value="">Selecciona una sucursal...</option>
+                    <option value="">Seleccioná una sucursal...</option>
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>{b.name} — {b.address}</option>
                     ))}
-                  </select>
-                  {formErrors.origin_branch_id && <p className="text-sm text-red-600 mt-1">{formErrors.origin_branch_id}</p>}
+                  </StyledSelect>
                 </div>
 
                 {form.shipment_type === 'S2S' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal de Destino *</label>
-                    <select
+                    <FieldLabel>Sucursal de Destino *</FieldLabel>
+                    <StyledSelect
                       value={form.dest_branch_id}
                       onChange={(e) => set('dest_branch_id', e.target.value)}
-                      className="input w-full"
+                      error={formErrors.dest_branch_id}
                     >
-                      <option value="">Selecciona una sucursal...</option>
+                      <option value="">Seleccioná una sucursal...</option>
                       {branches.filter((b) => b.id !== form.origin_branch_id).map((b) => (
                         <option key={b.id} value={b.id}>{b.name} — {b.address}</option>
                       ))}
-                    </select>
-                    {formErrors.dest_branch_id && <p className="text-sm text-red-600 mt-1">{formErrors.dest_branch_id}</p>}
+                    </StyledSelect>
                   </div>
                 )}
 
                 {form.shipment_type === 'S2D' && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Dirección de entrega *</label>
-                      <input
-                        type="text"
-                        value={form.dest_address}
-                        onChange={(e) => set('dest_address', e.target.value)}
-                        placeholder="Av. Ejemplo 1234, Ciudad"
-                        className="input w-full"
-                      />
-                      {formErrors.dest_address && <p className="text-sm text-red-600 mt-1">{formErrors.dest_address}</p>}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Latitud *</label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={form.dest_lat}
-                          onChange={(e) => set('dest_lat', e.target.value)}
-                          placeholder="-34.6037"
-                          className="input w-full"
-                        />
-                        {formErrors.dest_lat && <p className="text-sm text-red-600 mt-1">{formErrors.dest_lat}</p>}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitud *</label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={form.dest_lng}
-                          onChange={(e) => set('dest_lng', e.target.value)}
-                          placeholder="-58.3816"
-                          className="input w-full"
-                        />
-                        {formErrors.dest_lng && <p className="text-sm text-red-600 mt-1">{formErrors.dest_lng}</p>}
-                      </div>
-                    </div>
-                  </div>
+                  <AddressAutocomplete
+                    value={form.dest_address}
+                    onChange={(val) => set('dest_address', val)}
+                    onSelect={(address, lat, lng) => {
+                      set('dest_address', address);
+                      set('dest_lat', lat);
+                      set('dest_lng', lng);
+                    }}
+                    error={formErrors.dest_address}
+                  />
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
             {/* Dimensiones */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Weight className="h-5 w-5" />
-                  Dimensiones y Peso
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input
-                    label="Peso (kg)"
-                    type="number"
-                    step="0.1"
-                    placeholder="5.0"
-                    value={form.weight_kg}
-                    onChange={(e) => set('weight_kg', e.target.value)}
-                    error={formErrors.weight_kg}
-                  />
-                  <Input
-                    label="Largo (cm)"
-                    type="number"
-                    placeholder="30"
-                    value={form.length_cm}
-                    onChange={(e) => set('length_cm', e.target.value)}
-                    error={formErrors.length_cm}
-                  />
-                  <Input
-                    label="Ancho (cm)"
-                    type="number"
-                    placeholder="20"
-                    value={form.width_cm}
-                    onChange={(e) => set('width_cm', e.target.value)}
-                    error={formErrors.width_cm}
-                  />
-                  <Input
-                    label="Alto (cm)"
-                    type="number"
-                    placeholder="15"
-                    value={form.height_cm}
-                    onChange={(e) => set('height_cm', e.target.value)}
-                    error={formErrors.height_cm}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <SectionCard icon={Weight} title="Dimensiones y Peso">
+              <div className="grid gap-4 md:grid-cols-2">
+                <StyledInput label="Peso (kg)" type="number" step="0.1" placeholder="5.0"
+                  value={form.weight_kg} onChange={(e) => set('weight_kg', e.target.value)} error={formErrors.weight_kg} />
+                <StyledInput label="Largo (cm)" type="number" placeholder="30"
+                  value={form.length_cm} onChange={(e) => set('length_cm', e.target.value)} error={formErrors.length_cm} />
+                <StyledInput label="Ancho (cm)" type="number" placeholder="20"
+                  value={form.width_cm} onChange={(e) => set('width_cm', e.target.value)} error={formErrors.width_cm} />
+                <StyledInput label="Alto (cm)" type="number" placeholder="15"
+                  value={form.height_cm} onChange={(e) => set('height_cm', e.target.value)} error={formErrors.height_cm} />
+              </div>
+            </SectionCard>
 
-            {/* Contenido */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tipo de Contenido</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <select
-                  value={form.content_type}
-                  onChange={(e) => set('content_type', e.target.value as any)}
-                  className="input w-full"
-                >
-                  <option value="estandar">Estándar</option>
-                  <option value="fragil">Frágil</option>
-                  <option value="perecedero">Perecedero</option>
-                  <option value="peligroso">Peligroso</option>
-                </select>
-              </CardContent>
-            </Card>
+            {/* Tipo de contenido */}
+            <SectionCard icon={Box} title="Tipo de Contenido">
+              <FieldLabel>Contenido del paquete</FieldLabel>
+              <StyledSelect
+                value={form.content_type}
+                onChange={(e) => set('content_type', e.target.value as any)}
+              >
+                <option value="estandar">Estándar</option>
+                <option value="fragil">Frágil</option>
+                <option value="perecedero">Perecedero</option>
+                <option value="peligroso">Peligroso</option>
+              </StyledSelect>
+            </SectionCard>
 
-            <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate('/shipments')}>
+            {/* Acciones */}
+            <div className="flex justify-between gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/shipments')}
+                className="rounded-xl border px-6 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                style={{ borderColor: '#E2E8F0' }}
+              >
                 Cancelar
-              </Button>
-              <Button onClick={handleQuote} loading={loading}>
-                Cotizar Envío
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              </button>
+              <button
+                onClick={handleQuote}
+                disabled={loading}
+                className="flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #0284C7, #38BDF8)', boxShadow: '0 4px 14px rgba(2,132,199,0.35)' }}
+              >
+                {loading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <>Cotizar Envío <ArrowRight className="h-4 w-4" /></>
+                )}
+              </button>
             </div>
           </div>
         )}
 
+        {/* ── STEP 2 ── */}
         {step === 2 && quote && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Resumen del Envío
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Costo Base:</span>
-                    <span className="font-medium">${quote.base_cost?.toFixed(2)}</span>
-                  </div>
-                  {quote.last_mile_cost > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Última Milla:</span>
-                      <span className="font-medium">${quote.last_mile_cost?.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {quote.express_surcharge > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Recargo Express:</span>
-                      <span className="font-medium">${quote.express_surcharge?.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm text-slate-500">
-                    <span>Distancia:</span>
-                    <span>{quote.distance_km?.toFixed(0)} km</span>
-                  </div>
-                  <div className="border-t border-border pt-4">
-                    <div className="flex justify-between text-lg">
-                      <span className="font-bold">Total:</span>
-                      <span className="font-bold text-sky-600">
-                        ${quote.total_cost?.toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Entrega estimada: {quote.estimated_delivery_days} día{quote.estimated_delivery_days !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-5">
 
-            <div className="flex justify-between gap-4">
-              <Button type="button" variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Volver
-              </Button>
-              <Button onClick={handleCreate} loading={loading}>
-                Confirmar y Crear Envío
-              </Button>
+            {/* Resumen */}
+            <div
+              className="rounded-2xl bg-white p-6"
+              style={{ border: '1px solid #E2E8F0', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+            >
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: '#F0F9FF' }}>
+                  <DollarSign className="h-4 w-4" style={{ color: '#0284C7' }} />
+                </div>
+                <h3 className="font-bold text-slate-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                  Resumen de Cotización
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { label: 'Costo base', value: `$${parseFloat(String(quote.base_cost || 0)).toFixed(2)}`, show: true },
+                  { label: 'Última milla', value: `$${parseFloat(String(quote.last_mile_cost || 0)).toFixed(2)}`, show: parseFloat(String(quote.last_mile_cost)) > 0 },
+                  { label: 'Recargo Express', value: `$${parseFloat(String(quote.express_surcharge || 0)).toFixed(2)}`, show: parseFloat(String(quote.express_surcharge)) > 0 },
+                  { label: 'Distancia', value: `${parseFloat(String(quote.distance_km || 0)).toFixed(0)} km`, show: true },
+                ].filter((r) => r.show).map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">{label}</span>
+                    <span className="text-sm font-semibold text-slate-800">{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="mt-5 rounded-xl p-4"
+                style={{ background: 'linear-gradient(135deg, #F0F9FF, #E0F2FE)', border: '1px solid #BAE6FD' }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800">Total a pagar</span>
+                  <span
+                    className="text-2xl font-black"
+                    style={{ color: '#0284C7', fontFamily: "'Poppins', sans-serif" }}
+                  >
+                    ${parseFloat(String(quote.total_cost || 0)).toFixed(2)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Entrega estimada: {quote.estimated_delivery_days} día{quote.estimated_delivery_days !== 1 ? 's' : ''} hábil{quote.estimated_delivery_days !== 1 ? 'es' : ''}
+                </p>
+              </div>
+            </div>
+
+            {/* Detalle del envío */}
+            <div
+              className="rounded-2xl bg-white p-6"
+              style={{ border: '1px solid #E2E8F0', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+            >
+              <h3 className="mb-4 font-bold text-slate-900" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                Detalles del envío
+              </h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                {[
+                  { label: 'Tipo', value: form.shipment_type === 'S2S' ? 'Sucursal a Sucursal' : 'Sucursal a Domicilio' },
+                  { label: 'Modalidad', value: form.modality },
+                  { label: 'Peso', value: `${form.weight_kg} kg` },
+                  { label: 'Dimensiones', value: `${form.length_cm} × ${form.width_cm} × ${form.height_cm} cm` },
+                  { label: 'Contenido', value: form.content_type.charAt(0).toUpperCase() + form.content_type.slice(1) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="rounded-xl p-3" style={{ background: '#F8FAFC' }}>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+                    <p className="mt-0.5 text-sm font-bold text-slate-800">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex justify-between gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex items-center gap-2 rounded-xl border px-6 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                style={{ borderColor: '#E2E8F0' }}
+              >
+                <ArrowLeft className="h-4 w-4" /> Volver
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={loading}
+                className="flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #0284C7, #38BDF8)', boxShadow: '0 4px 14px rgba(2,132,199,0.35)' }}
+              >
+                {loading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <>Confirmar y Crear Envío <CheckCircle className="h-4 w-4" /></>
+                )}
+              </button>
             </div>
           </div>
         )}

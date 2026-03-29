@@ -1,55 +1,33 @@
 import { Request, Response } from 'express';
 import pool from '../../db/pool';
-import { processAIChat } from './ai.service';
 import { localAI } from './local-ai.service';
 
-// POST /ai/chat - Conversacion con el Agente IA
+// POST /ai/chat
 export async function chat(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).user.userId;
-    const { message, sessionId, useLocal } = req.body;
+    const { message, sessionId } = req.body;
 
     if (!message) {
       res.status(400).json({ error: 'El mensaje es requerido' });
       return;
     }
 
-    // Generar o usar sessionId
     const currentSessionId = sessionId || `session_${userId}_${Date.now()}`;
+    const response = await localAI.processMessage(userId, message, currentSessionId);
 
-    // Determinar qué AI usar
-    // Por defecto usa AI local, solo usa OpenAI si useLocal=false y hay API key válida
-    const shouldUseLocal = useLocal !== false || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-test-key';
-
-    let aiResponse: string;
-    let aiType: string;
-
-    if (shouldUseLocal) {
-      // Usar AI local (basado en reglas, sin costo)
-      aiResponse = await localAI.processMessage(userId, message, currentSessionId);
-      aiType = 'local';
-    } else {
-      // Usar OpenAI (requiere créditos)
-      aiResponse = await processAIChat(userId, message, currentSessionId);
-      aiType = 'openai';
-    }
-
-    res.json({
-      response: aiResponse,
-      sessionId: currentSessionId,
-      aiType,
-    });
+    res.json({ response, sessionId: currentSessionId });
 
   } catch (error) {
     console.error('Error en chat con IA:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Error al procesar tu mensaje',
-      response: 'Lo siento, hubo un error. ¿Te gustaria que escalara tu consulta a un agente humano?',
+      response: 'Lo siento, hubo un error. Podés llamarnos al (011) 1234-5678.',
     });
   }
 }
 
-// GET /ai/chat/history - Obtener historial de conversaciones
+// GET /ai/chat/history
 export async function getChatHistory(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).user.userId;
@@ -71,7 +49,7 @@ export async function getChatHistory(req: Request, res: Response): Promise<void>
   }
 }
 
-// POST /ai/chat/:sessionId/rate - Calificar conversacion
+// POST /ai/chat/:sessionId/rate
 export async function rateSession(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).user.userId;
@@ -83,18 +61,16 @@ export async function rateSession(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Actualizar o crear rating en ai_conversations
     await pool.query(
-      `UPDATE ai_conversations
-       SET rating = $1, ended_at = NOW()
+      `UPDATE ai_conversations SET rating = $1, ended_at = NOW()
        WHERE session_id = $2 AND user_id = $3`,
       [rating, sessionId, userId]
     );
 
-    res.json({ message: 'Gracias por tu calificacion' });
+    res.json({ message: 'Gracias por tu calificación' });
 
   } catch (error) {
-    console.error('Error al calificar sesion:', error);
-    res.status(500).json({ error: 'Error al calificar sesion' });
+    console.error('Error al calificar sesión:', error);
+    res.status(500).json({ error: 'Error al calificar sesión' });
   }
 }

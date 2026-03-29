@@ -11,8 +11,12 @@ import pool from '../../db/pool';
  */
 export async function getActiveBranches(_req: Request, res: Response): Promise<void> {
   try {
+    // Obelisco: -34.6037, -58.3816 — ordenar por distancia ascendente
     const result = await pool.query(
-      'SELECT id, name, address, lat, lng, schedule FROM branches WHERE is_active = true ORDER BY name ASC'
+      `SELECT id, name, address, lat, lng, schedule, is_active
+       FROM branches
+       WHERE is_active = true
+       ORDER BY point(lat, lng) <-> point(-34.6037, -58.3816) ASC`
     );
 
     res.status(200).json(result.rows);

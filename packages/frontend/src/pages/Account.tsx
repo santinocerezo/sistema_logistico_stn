@@ -92,7 +92,7 @@ export const Account = () => {
             <div>
               <p className="text-sm text-gray-600">Saldo Disponible</p>
               <p className="text-4xl font-bold text-gray-900 mt-2">
-                ${user?.balance.toFixed(2)}
+                ${parseFloat(String(user?.balance || 0)).toFixed(2)}
               </p>
             </div>
             <button
@@ -167,10 +167,10 @@ export const Account = () => {
                           transaction.type === 'topup' ? 'text-green-600' : 'text-red-600'
                         }`}
                       >
-                        {transaction.type === 'topup' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
+                        {transaction.type === 'topup' ? '+' : '-'}${Math.abs(parseFloat(String(transaction.amount || 0))).toFixed(2)}
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
-                        Saldo: ${transaction.balanceAfter.toFixed(2)}
+                        Saldo: ${parseFloat(String(transaction.balanceAfter || 0)).toFixed(2)}
                       </p>
                     </div>
                   </div>

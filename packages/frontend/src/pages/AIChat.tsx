@@ -20,10 +20,11 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(`session_${Date.now()}`);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -45,7 +46,6 @@ export default function AIChat() {
       const response = await api.post('/ai/chat', {
         message: sentInput,
         sessionId,
-        useLocal: true,
       });
 
       setMessages((prev) => [
@@ -125,7 +125,7 @@ export default function AIChat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -189,7 +189,6 @@ export default function AIChat() {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Input area */}

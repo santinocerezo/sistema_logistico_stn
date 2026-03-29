@@ -129,17 +129,17 @@ export default function ShipmentDetail() {
 
           {/* Costos */}
           <SectionCard icon={DollarSign} title="Costos">
-            <InfoRow label="Costo Base" value={`$${shipment.base_cost?.toFixed(2)}`} />
-            {shipment.last_mile_cost > 0 && (
-              <InfoRow label="Última Milla" value={`$${shipment.last_mile_cost?.toFixed(2)}`} />
+            <InfoRow label="Costo Base" value={`$${parseFloat(shipment.base_cost || 0).toFixed(2)}`} />
+            {parseFloat(shipment.last_mile_cost) > 0 && (
+              <InfoRow label="Última Milla" value={`$${parseFloat(shipment.last_mile_cost).toFixed(2)}`} />
             )}
-            {shipment.express_surcharge > 0 && (
-              <InfoRow label="Recargo Express" value={`$${shipment.express_surcharge?.toFixed(2)}`} />
+            {parseFloat(shipment.express_surcharge) > 0 && (
+              <InfoRow label="Recargo Express" value={`$${parseFloat(shipment.express_surcharge).toFixed(2)}`} />
             )}
             <div className="flex items-center justify-between py-4">
               <span className="font-bold text-slate-800">Total</span>
               <span className="text-lg font-black" style={{ color: '#0284C7', fontFamily: "'Poppins', sans-serif" }}>
-                ${shipment.total_cost?.toFixed(2)}
+                ${parseFloat(shipment.total_cost || 0).toFixed(2)}
               </span>
             </div>
           </SectionCard>

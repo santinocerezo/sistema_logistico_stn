@@ -88,7 +88,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>Saldo</p>
                 <p className="mt-1.5 text-2xl font-black text-white" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                  ${user?.balance?.toFixed(2)}
+                  ${parseFloat(String(user?.balance || 0)).toFixed(2)}
                 </p>
               </div>
               <div
@@ -239,7 +239,7 @@ export default function Dashboard() {
                   </div>
                   <StatusBadge status={shipment.status} />
                   <p className="text-sm font-bold text-slate-700 w-16 text-right">
-                    ${shipment.total_cost?.toFixed(2)}
+                    ${parseFloat(String(shipment.total_cost || 0)).toFixed(2)}
                   </p>
                   <Link to={`/shipments/${shipment.tracking_code}`}>
                     <Button variant="ghost" size="sm">

@@ -10,10 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import api from '../lib/api';
 
 const registerSchema = z.object({
-  full_name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.string().email('Email inválido'),
   phone: z.string().min(10, 'Teléfono inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  password: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(
+      /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/,
+      'Debe contener al menos una mayúscula, un número y un carácter especial',
+    ),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
@@ -40,7 +46,7 @@ export default function Register() {
       setLoading(true);
       setError('');
       
-      const { confirmPassword, ...registerData } = data;
+      const { confirmPassword: _, ...registerData } = data;
       await api.post('/auth/register', registerData);
       
       navigate('/login', { 
@@ -87,8 +93,8 @@ export default function Register() {
               <Input
                 label="Nombre Completo"
                 placeholder="Juan Pérez"
-                error={errors.full_name?.message}
-                {...register('full_name')}
+                error={errors.fullName?.message}
+                {...register('fullName')}
               />
 
               <Input
