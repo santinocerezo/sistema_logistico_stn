@@ -154,7 +154,7 @@ export default function Shipments() {
                       {shipment.shipment_type} · {shipment.modality} · {new Date(shipment.created_at).toLocaleDateString('es-AR')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex flex-col items-end gap-2 shrink-0 sm:flex-row sm:items-center sm:gap-4">
                     {getStatusBadge(shipment.status)}
                     <div className="text-right">
                       <p className="text-sm font-bold text-slate-800">${parseFloat(String(shipment.total_cost || 0)).toFixed(2)}</p>
