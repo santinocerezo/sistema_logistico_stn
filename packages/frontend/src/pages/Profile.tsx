@@ -24,9 +24,9 @@ export const Profile = () => {
     setSuccess('');
 
     try {
-      await api.patch('/profile', formData);
+      await api.patch('/profile', { full_name: formData.fullName, phone: formData.phone });
       const token = localStorage.getItem('token') || '';
-      setAuth({ ...user!, ...formData }, token);
+      setAuth({ ...user!, fullName: formData.fullName, phone: formData.phone }, token);
       setSuccess('Perfil actualizado correctamente');
       setEditing(false);
     } catch (err: any) {

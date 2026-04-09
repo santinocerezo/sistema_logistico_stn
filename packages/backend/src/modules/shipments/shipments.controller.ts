@@ -143,12 +143,12 @@ function generateVerificationCode(): string {
  * Valida: Requerimientos 10.2, 10.3, 10.4, 10.5
  */
 const VALID_STATE_TRANSITIONS: Record<string, string[]> = {
-  'Pendiente': ['En Sucursal', 'Cancelado'],
-  'En Sucursal': ['Asignado', 'Cancelado'],
-  'Asignado': ['En Camino'],
-  'En Camino': ['En Entrega'],
-  'En Entrega': ['Entregado', 'Entrega_Fallida'],
-  'Entrega_Fallida': ['En Entrega', 'Devuelto_a_Sucursal'],
+  'Pendiente': ['En_Sucursal', 'Cancelado'],
+  'En_Sucursal': ['Asignado', 'Cancelado'],
+  'Asignado': ['En_Camino'],
+  'En_Camino': ['En_Entrega'],
+  'En_Entrega': ['Entregado', 'Entrega_Fallida'],
+  'Entrega_Fallida': ['En_Entrega', 'Devuelto_a_Sucursal'],
   'Entregado': [],
   'Devuelto_a_Sucursal': [],
   'Cancelado': [],
@@ -607,7 +607,7 @@ export async function cancelShipment(req: Request, res: Response): Promise<void>
     const currentStatus = shipment.status;
 
     // Validar que el estado permita cancelación
-    const allowedStatuses = ['Pendiente', 'En Sucursal'];
+    const allowedStatuses = ['Pendiente', 'En_Sucursal'];
     
     if (!allowedStatuses.includes(currentStatus)) {
       await client.query('ROLLBACK');

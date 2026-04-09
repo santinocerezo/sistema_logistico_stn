@@ -454,7 +454,7 @@ export async function createCourier(req: Request, res: Response): Promise<void> 
 
     const result = await pool.query(
       `INSERT INTO couriers (email, password_hash, full_name, phone, is_active, is_available)
-       VALUES ($1, $2, $3, $4, true, false)
+       VALUES ($1, $2, $3, $4, true, true)
        RETURNING id, email, full_name, phone, is_active, is_available, created_at`,
       [email, password_hash, full_name, phone]
     );
@@ -596,7 +596,7 @@ export async function assignCourier(req: Request, res: Response): Promise<void> 
 
     const shipment = shipmentResult.rows[0];
 
-    if (shipment.status !== 'En Sucursal') {
+    if (shipment.status !== 'En_Sucursal') {
       await client.query('ROLLBACK');
       res.status(409).json({
         error: 'Solo se pueden asignar envíos en estado "En Sucursal"',
@@ -627,7 +627,7 @@ export async function assignCourier(req: Request, res: Response): Promise<void> 
     await client.query(
       `INSERT INTO shipment_status_history 
        (shipment_id, from_status, to_status, changed_by, changed_by_role, notes)
-       VALUES ($1, 'En Sucursal', 'Asignado', $2, 'admin', $3)`,
+       VALUES ($1, 'En_Sucursal', 'Asignado', $2, 'admin', $3)`,
       [id, adminId, `Asignado a repartidor ${courierResult.rows[0].full_name}`]
     );
 
@@ -705,3 +705,4 @@ export async function getAuditLogs(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Error al obtener logs de auditoría' });
   }
 }
+

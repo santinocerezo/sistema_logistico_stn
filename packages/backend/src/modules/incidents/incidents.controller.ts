@@ -322,7 +322,7 @@ export async function createTicket(req: Request, res: Response): Promise<void> {
     const result = await pool.query(
       `INSERT INTO support_tickets 
        (ticket_number, user_id, shipment_id, subject, description, status, priority)
-       VALUES ($1, $2, $3, $4, $5, 'abierto', 'normal')
+       VALUES ($1, $2, $3, $4, $5, 'abierto', 'media')
        RETURNING *`,
       [ticketNumber, userId, shipment_id || null, subject, description]
     );
@@ -465,3 +465,4 @@ export async function updateTicket(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Error al actualizar ticket' });
   }
 }
+

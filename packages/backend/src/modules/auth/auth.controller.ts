@@ -16,10 +16,11 @@ import {
 const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
 function setRefreshCookie(res: Response, token: string): void {
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'strict',
     maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     path: '/auth',
   });
@@ -66,7 +67,6 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     setRefreshCookie(res, result.tokens.refreshToken);
-    // La respuesta incluye accessToken, user (con role para que el frontend redirija) — Req 1.3, 1.4, 1.5
     res.status(200).json({
       accessToken: result.tokens.accessToken,
       user: result.user,
@@ -195,7 +195,8 @@ export async function logout(req: Request, res: Response): Promise<void> {
   }
 
   // Limpiar cookie refreshToken
-  res.clearCookie('refreshToken', { path: '/auth' });
+  const isProd = process.env.NODE_ENV === 'production';
+  res.clearCookie('refreshToken', { path: '/auth', secure: isProd, sameSite: isProd ? 'none' : 'strict' });
   res.status(200).json({ message: 'Sesión cerrada correctamente' });
 }
 

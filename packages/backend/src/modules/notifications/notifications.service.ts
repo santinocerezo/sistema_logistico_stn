@@ -91,10 +91,10 @@ export async function notifyShipmentStatusChange(
 
     const statusMessages: Record<string, string> = {
       'Pendiente': 'Tu envio ha sido creado y esta pendiente de procesamiento',
-      'En Sucursal': 'Tu envio ha llegado a la sucursal',
+      'En_Sucursal': 'Tu envio ha llegado a la sucursal',
       'Asignado': 'Tu envio ha sido asignado a un repartidor',
-      'En Camino': 'Tu envio esta en camino',
-      'En Entrega': 'Tu envio esta siendo entregado',
+      'En_Camino': 'Tu envio esta en camino',
+      'En_Entrega': 'Tu envio esta siendo entregado',
       'Entregado': 'Tu envio ha sido entregado exitosamente',
       'Entrega_Fallida': 'No se pudo entregar tu envio',
       'Devuelto_a_Sucursal': 'Tu envio ha sido devuelto a la sucursal',

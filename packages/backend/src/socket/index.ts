@@ -80,7 +80,7 @@ export function initializeSocketIO(httpServer: HTTPServer): Server {
             s.status
            FROM shipments s
            JOIN couriers c ON s.courier_id = c.id
-           WHERE s.id = $1 AND c.user_id = $2 AND s.status IN ('En Camino', 'En Entrega')`,
+           WHERE s.id = $1 AND c.user_id = $2 AND s.status IN ('En_Camino', 'En_Entrega')`,
           [shipmentId, socket.userId]
         );
 

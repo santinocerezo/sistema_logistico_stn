@@ -8,7 +8,10 @@ import Footer from './components/layout/Footer';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import CourierDashboard from './pages/CourierDashboard';
 import AIChat from './pages/AIChat';
 import Shipments from './pages/Shipments';
 import NewShipment from './pages/NewShipment';
@@ -26,6 +29,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 
+function DashboardRoute() {
+  const { user } = useAuthStore();
+  if (user?.role === 'admin') return <AdminDashboard />;
+  if (user?.role === 'courier') return <CourierDashboard />;
+  return <Dashboard />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -38,6 +48,7 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/tracking/:trackingCode" element={<Tracking />} />
               <Route path="/branches" element={<Branches />} />
@@ -47,7 +58,7 @@ function App() {
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <DashboardRoute />
                   </ProtectedRoute>
                 }
               />

@@ -38,7 +38,8 @@ export default function Register() {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(registerSchema as any),
   });
 
   const onSubmit = async (data: RegisterForm) => {

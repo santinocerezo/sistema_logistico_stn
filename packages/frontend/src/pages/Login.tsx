@@ -28,7 +28,8 @@ export default function Login() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(loginSchema as any),
   });
 
   const onSubmit = async (data: LoginForm) => {

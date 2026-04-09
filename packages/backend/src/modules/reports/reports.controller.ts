@@ -19,7 +19,7 @@ export async function getDashboard(req: Request, res: Response): Promise<void> {
       SELECT 
         COUNT(*) as total_shipments,
         COUNT(CASE WHEN status = 'Entregado' THEN 1 END) as delivered,
-        COUNT(CASE WHEN status = 'En Entrega' THEN 1 END) as in_delivery,
+        COUNT(CASE WHEN status = 'En_Entrega' THEN 1 END) as in_delivery,
         COUNT(CASE WHEN status = 'Pendiente' THEN 1 END) as pending,
         COUNT(CASE WHEN status = 'Cancelado' THEN 1 END) as cancelled
       FROM shipments

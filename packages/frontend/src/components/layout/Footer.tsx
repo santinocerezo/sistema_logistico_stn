@@ -53,7 +53,7 @@ export default function Footer() {
               {[
                 { to: '/tracking', label: 'Rastrear Envío' },
                 { to: '/branches', label: 'Sucursales' },
-                { to: '/faq', label: 'Preguntas Frecuentes' },
+                { to: '/register', label: 'Crear cuenta' },
               ].map(({ to, label }) => (
                 <li key={to}>
                   <Link

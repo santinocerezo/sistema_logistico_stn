@@ -266,7 +266,7 @@ export class LocalAIService {
     return 'Para consultar si hay un retraso, necesito el código de seguimiento. Los retrasos superiores a 5 días hábiles se pueden reportar como incidencia desde "Mis Envíos".';
   }
 
-  private courierProblemResponse(context: UserContext): string {
+  private courierProblemResponse(_context: UserContext): string {
     return `Si el repartidor no se presentó, no tocó el timbre o hubo algún problema con la entrega, podés reportarlo desde "Mis Envíos" → tu envío → "Reportar problema". Seleccioná el motivo "Problema con el repartidor". Tomamos estos casos muy en serio y respondemos en 24 hs hábiles.`;
   }
 

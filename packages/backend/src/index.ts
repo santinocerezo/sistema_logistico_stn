@@ -1,4 +1,11 @@
 import 'dotenv/config';
+
+// Evitar que errores de conexión de Redis/BullMQ rompan la app en desarrollo
+process.on('unhandledRejection', (reason: any) => {
+  if (reason?.code === 'ECONNREFUSED' || reason?.name === 'AggregateError') return;
+  console.error('Unhandled rejection:', reason);
+});
+
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
@@ -22,7 +29,12 @@ import aiRoutes from './modules/ai/ai.routes';
 import { authenticate } from './middleware/auth';
 import { authenticatedApiRateLimiter } from './middleware/rateLimiter';
 import { initializeSocketIO } from './socket';
-import './modules/notifications/notifications.queue'; // Inicializar worker de notificaciones
+// Worker de notificaciones (requiere Redis — deshabilitado si no está disponible)
+try {
+  require('./modules/notifications/notifications.queue');
+} catch {
+  console.warn('⚠️  Worker de notificaciones deshabilitado (Redis no disponible)');
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -36,8 +48,12 @@ app.set('io', io);
 
 // Middleware
 app.use(helmet());
+const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:5173').split(',').map(o => o.trim());
 app.use(cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json());

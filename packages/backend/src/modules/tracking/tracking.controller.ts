@@ -75,7 +75,7 @@ export async function confirmDelivery(req: Request, res: Response): Promise<void
     }
 
     // Validar estado actual
-    if (shipment.status !== 'En Entrega') {
+    if (shipment.status !== 'En_Entrega') {
       await client.query('ROLLBACK');
       res.status(409).json({
         error: 'El envío debe estar en estado "En Entrega" para confirmar la entrega',
@@ -94,7 +94,7 @@ export async function confirmDelivery(req: Request, res: Response): Promise<void
     await client.query(
       `INSERT INTO shipment_status_history 
        (shipment_id, from_status, to_status, changed_by, changed_by_role, location_lat, location_lng, notes)
-       VALUES ($1, 'En Entrega', 'Entregado', $2, 'courier', $3, $4, 'Entrega confirmada')`,
+       VALUES ($1, 'En_Entrega', 'Entregado', $2, 'courier', $3, $4, 'Entrega confirmada')`,
       [id, courierId, location_lat, location_lng]
     );
 
@@ -184,7 +184,7 @@ export async function failDelivery(req: Request, res: Response): Promise<void> {
     const shipment = shipmentResult.rows[0];
 
     // Validar estado actual
-    if (shipment.status !== 'En Entrega') {
+    if (shipment.status !== 'En_Entrega') {
       await client.query('ROLLBACK');
       res.status(409).json({
         error: 'El envío debe estar en estado "En Entrega" para registrar entrega fallida',
@@ -260,7 +260,7 @@ export async function failDelivery(req: Request, res: Response): Promise<void> {
     await client.query(
       `INSERT INTO shipment_status_history 
        (shipment_id, from_status, to_status, changed_by, changed_by_role, location_lat, location_lng, notes)
-       VALUES ($1, 'En Entrega', $2, $3, 'courier', $4, $5, $6)`,
+       VALUES ($1, 'En_Entrega', $2, $3, 'courier', $4, $5, $6)`,
       [id, newStatus, courierId, location_lat, location_lng, notes]
     );
 
@@ -335,7 +335,7 @@ export async function getLiveLocation(req: Request, res: Response): Promise<void
 
     // Calcular ETA si el envío está en entrega
     let eta_minutes = null;
-    if (shipment.status === 'En Entrega' && courier.current_lat && courier.current_lng) {
+    if (shipment.status === 'En_Entrega' && courier.current_lat && courier.current_lng) {
       const distance = haversineDistance(
         parseFloat(courier.current_lat),
         parseFloat(courier.current_lng),

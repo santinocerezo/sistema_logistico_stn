@@ -31,7 +31,7 @@ export async function calculateOptimizedRoute(
       scheduled_pickup_date
      FROM shipments
      WHERE courier_id = $1 
-       AND status IN ('Asignado', 'En Camino', 'En Entrega')
+       AND status IN ('Asignado', 'En_Camino', 'En_Entrega')
      ORDER BY 
        CASE WHEN service_type = 'express' THEN 1 ELSE 2 END,
        scheduled_pickup_date ASC NULLS LAST`,

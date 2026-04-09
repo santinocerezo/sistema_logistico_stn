@@ -44,7 +44,7 @@ export async function getAssignedShipments(req: Request, res: Response): Promise
        FROM shipments s
        JOIN users u ON s.user_id = u.id
        WHERE s.courier_id = $1 
-         AND s.status IN ('Asignado', 'En Camino', 'En Entrega')
+         AND s.status IN ('Asignado', 'En_Camino', 'En_Entrega')
        ORDER BY 
          CASE WHEN s.service_type = 'express' THEN 1 ELSE 2 END,
          s.scheduled_pickup_date ASC NULLS LAST,

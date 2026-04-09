@@ -6,6 +6,8 @@ const connection = {
   host: parsedUrl.hostname || 'localhost',
   port: parseInt(parsedUrl.port || '6379'),
   maxRetriesPerRequest: null as null,
+  enableOfflineQueue: false,
+  lazyConnect: true,
 };
 
 interface NotificationJob {
@@ -192,6 +194,11 @@ notificationWorker.on('failed', (job, err) => {
   console.error(`Notificacion ${job?.id} fallo:`, err.message);
 });
 
-notificationWorker.on('error', (err) => {
-  console.error('Error en worker de notificaciones:', err);
+notificationWorker.on('error', () => {
+  // Redis no disponible — notificaciones deshabilitadas
+});
+
+// Absorber errores de conexión de la cola
+notificationQueue.on('error', () => {
+  // Redis no disponible — cola de notificaciones deshabilitada
 });
