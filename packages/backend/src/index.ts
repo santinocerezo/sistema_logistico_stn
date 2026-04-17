@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 
 // Evitar que errores de conexión de Redis/BullMQ rompan la app en desarrollo
 process.on('unhandledRejection', (reason: any) => {
@@ -96,6 +98,15 @@ app.use('/reports', reportsRoutes);
 // Admin routes (requieren autenticación y rol admin)
 app.use('/admin/rates', adminRatesRoutes);
 app.use('/admin', adminRoutes);
+
+// Servir frontend en producción
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+if (process.env.NODE_ENV === 'production' && fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 httpServer.listen(PORT, () => {
   console.info(`🚀 Backend STN PQ's corriendo en http://localhost:${PORT}`);
