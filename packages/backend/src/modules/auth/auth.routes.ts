@@ -3,6 +3,8 @@ import { authenticate } from '../../middleware/auth';
 import {
   loginRateLimiter,
   twoFactorRateLimiter,
+  registerRateLimiter,
+  passwordResetRateLimiter,
 } from '../../middleware/rateLimiter';
 import {
   register,
@@ -20,7 +22,8 @@ import {
 const router = Router();
 
 // POST /auth/register — Registro de usuario (Req 1.1, 8.1, 8.2, 8.3, 8.6)
-router.post('/register', register);
+// Rate limit: 5 req/hora por IP para evitar abuso
+router.post('/register', registerRateLimiter, register);
 
 // POST /auth/login — Inicio de sesión con JWT (Req 1.2, 1.3, 1.4, 1.5, 1.6, 6.1, 6.2)
 // Si el usuario tiene 2FA activo, devuelve { requiresTwoFactor: true, tempToken }
@@ -47,9 +50,10 @@ router.post('/2fa/complete', twoFactorRateLimiter, twoFactorComplete);
 router.post('/2fa/disable', authenticate, twoFactorDisable);
 
 // POST /auth/password/reset-request — Solicita recuperación de contraseña (Req 7.1, 7.2, 7.3, 7.5)
-router.post('/password/reset-request', passwordResetRequest);
+// Rate limit: 3 req/hora por IP para evitar enumeración de emails
+router.post('/password/reset-request', passwordResetRateLimiter, passwordResetRequest);
 
 // POST /auth/password/reset — Restablece la contraseña con token (Req 7.4, 7.6)
-router.post('/password/reset', passwordReset);
+router.post('/password/reset', passwordResetRateLimiter, passwordReset);
 
 export default router;

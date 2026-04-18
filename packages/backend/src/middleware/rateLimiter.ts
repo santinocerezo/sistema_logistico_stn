@@ -157,6 +157,33 @@ export const authenticatedApiRateLimiter = rateLimiter({
 });
 
 /**
+ * Rate limiter para registro: 5 req/hora por IP para evitar abuso de creación de cuentas.
+ */
+export const registerRateLimiter = rateLimiter({
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 5,
+  keyGenerator: (req) => {
+    const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+    return `ratelimit:register:${ip}`;
+  },
+  message: 'Demasiados intentos de registro. Intente más tarde.',
+});
+
+/**
+ * Rate limiter para reset de contraseña: 3 req/hora por IP.
+ * Evita enumeración de emails y spam del canal de recuperación.
+ */
+export const passwordResetRateLimiter = rateLimiter({
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 3,
+  keyGenerator: (req) => {
+    const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+    return `ratelimit:pwdreset:${ip}`;
+  },
+  message: 'Demasiadas solicitudes de recuperación. Intente en 1 hora.',
+});
+
+/**
  * Rate limiter para cotización pública: 10 req/hora por IP
  * Valida: Requerimiento 6.4
  */
