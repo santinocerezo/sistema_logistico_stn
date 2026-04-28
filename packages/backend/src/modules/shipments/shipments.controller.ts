@@ -189,6 +189,15 @@ export async function updateShipmentStatus(req: Request, res: Response): Promise
     const shipment = shipmentResult.rows[0];
     const currentStatus = shipment.status;
 
+    // Verificar autorización: admin y courier pueden modificar cualquier envío,
+    // un user normal sólo puede modificar los suyos. Sin este check cualquier
+    // usuario autenticado podía cambiar el estado de envíos ajenos (IDOR).
+    if (userRole !== 'admin' && userRole !== 'courier' && shipment.user_id !== userId) {
+      await client.query('ROLLBACK');
+      res.status(403).json({ error: 'Sin permisos para modificar este envío' });
+      return;
+    }
+
     // Validar transición de estado
     const validTransitions = VALID_STATE_TRANSITIONS[currentStatus] || [];
     
