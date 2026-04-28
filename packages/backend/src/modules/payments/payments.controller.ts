@@ -57,8 +57,23 @@ function encryptData(data: string): string {
  * Valida: Requerimientos 45.1-45.10, 46.1-46.5
  */
 export async function topUpBalance(req: Request, res: Response): Promise<void> {
+  // El gateway de pago de este endpoint está simulado con Math.random (ver
+  // processPaymentGateway). En producción, sin un gateway real, esto permite
+  // a cualquier user autenticado acreditarse saldo arbitrario. El endpoint
+  // queda deshabilitado salvo que STN_DEMO_MODE=true esté seteado, así puede
+  // mostrarse en una demo controlada sin estar abierto en deploys reales.
+  const isDemo = process.env.STN_DEMO_MODE === 'true';
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd && !isDemo) {
+    res.status(503).json({
+      error: 'Recarga deshabilitada',
+      message: 'Este endpoint requiere integración con un gateway de pago real. Habilitar STN_DEMO_MODE=true para uso en demos.',
+    });
+    return;
+  }
+
   const client = await pool.connect();
-  
+
   try {
     const { amount, payment_method, card_token, save_card } = req.body;
     const userId = (req as any).user.userId;
