@@ -17,12 +17,26 @@ export default function Branches() {
 
   useEffect(() => {
     api.get('/branches')
-      .then((r) => setBranches(r.data || []))
-      .catch((e) => console.error('Error loading branches:', e))
+      .then((r) => {
+        // El endpoint puede devolver un array directo, o { branches: [...] }, o un error.
+        // Si nos llega cualquier otra cosa, dejamos branches como [] para que no rompa el filter.
+        const data = r.data;
+        if (Array.isArray(data)) {
+          setBranches(data);
+        } else if (data && Array.isArray((data as { branches?: Branch[] }).branches)) {
+          setBranches((data as { branches: Branch[] }).branches);
+        } else {
+          setBranches([]);
+        }
+      })
+      .catch((e) => {
+        console.error('Error loading branches:', e);
+        setBranches([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = branches.filter(
+  const filtered = (Array.isArray(branches) ? branches : []).filter(
     (b) =>
       b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.address.toLowerCase().includes(search.toLowerCase())
